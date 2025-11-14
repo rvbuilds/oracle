@@ -21,7 +21,6 @@ program
   .option('--files-report', 'Show token usage per attached file (also prints automatically when files exceed the token budget).', false)
   .option('--preview', 'Preview the request and token usage without making an API call.', false)
   .option('--preview-json', 'When using --preview, also dump the full JSON payload.', false)
-  .option('--silent', 'Hide the model answer and only print stats.', false)
   .addOption(new Option('--exec-session <id>').hideHelp())
   .option('--render-markdown', 'Emit the assembled markdown bundle for prompt + files and exit.', false)
   .showHelpAfterError('(use --help for usage)');

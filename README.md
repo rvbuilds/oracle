@@ -45,7 +45,6 @@ Use `bun run start` if you prefer invoking the script through the package.json s
 | `--preview` | Print the token budget summary and exit before hitting the API. |
 | `--preview-json` | When combined with `--preview`, also dump the full JSON payload (otherwise only the summary/tokens print). |
 | `--render-markdown` | Emit the assembled markdown for system prompt, user prompt, and attached files (no API call). |
-| `--silent` | Skip printing the model answer in foreground runs; still prints stats/tokens/costs. |
 
 Every run ends with a stats block showing elapsed time, actual/estimated tokens, reasoning tokens, and dollar cost (computed from the official per-token rates for each model).
 
@@ -54,11 +53,11 @@ Every run ends with a stats block showing elapsed time, actual/estimated tokens,
 1. Gathers the base prompt plus any referenced files. Files are resolved relative to the current working directory and embedded verbatim under markdown headings so GPT-5 gets clear provenance.
 2. Uses `gpt-tokenizer`’s GPT-5/GPT-5 Pro encoders to count tokens for the synthetic system/user chat. If the estimate exceeds the configured budget (default 196,000 tokens for GPT-5 Thinking/Pro in the API), the CLI fails fast before hitting the network.
 3. Sends a single `responses.create` call with your prompt, the optional `web_search_preview` tool, and (for GPT-5.1) `reasoning.effort = high`.
-4. Streams the textual answer to stdout as soon as the API emits deltas (unless `--silent`), then prints run metadata including elapsed wall-clock time, API-reported usage numbers, and the computed USD cost. Cost is derived from OpenAI’s stated $1.25 / $10 per 1M token rate for GPT-5 and $15 / $120 per 1M tokens for GPT-5 Pro.
+4. Streams the textual answer to stdout as soon as the API emits deltas, then prints run metadata including elapsed wall-clock time, API-reported usage numbers, and the computed USD cost. Cost is derived from OpenAI’s stated $1.25 / $10 per 1M token rate for GPT-5 and $15 / $120 per 1M tokens for GPT-5 Pro.
 
 ## Notes
 
-- Responses stream by default; add `--silent` when driving this from scripts and you only need the stats block.
+- Responses stream by default so you can watch GPT-5 think. Capture stdout if you need to store the transcript.
 - Use `--preview` to inspect the final instructions + input text (including attached files) and verify token counts without spending API credits.
 - Use `--files-report` (or attach files that exceed the input token budget) to see a descending summary of per-file token usage so you know what to trim.
 - Directory paths expand recursively; consider pairing with `--files-report` to understand token impact before sending extremely large trees.
@@ -88,4 +87,4 @@ Typical workflow:
 bun test
 ```
 
-The Bun test suite covers prompt building with attachments, preview mode, token budget enforcement, silent vs. streaming runs, and the stats/cost output without touching the OpenAI API.
+The Bun test suite covers prompt building with attachments, preview mode, token budget enforcement, and the stats/cost output without touching the OpenAI API.
