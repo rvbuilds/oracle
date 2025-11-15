@@ -16,6 +16,17 @@
       "headers": {
         "Authorization": "Bearer ${FIRECRAWL_API_KEY}"
       }
+    },
+    "chrome-devtools": {
+      "description": "Attach chrome-devtools-mcp to the live Oracle browser session.",
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--browserUrl",
+        "${CHROME_DEVTOOLS_URL}"
+      ],
+      "lifecycle": "ephemeral"
     }
   },
   "imports": []
