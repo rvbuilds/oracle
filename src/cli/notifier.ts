@@ -62,13 +62,14 @@ export async function sendSessionNotification(
   payload: NotificationContent,
   settings: NotificationSettings,
   log: (message: string) => void,
+  answerPreview?: string,
 ): Promise<void> {
   if (!settings.enabled || isTestEnv(process.env)) {
     return;
   }
 
   const title = `Oracle${ORACLE_EMOJI} finished`;
-  const message = buildMessage(payload);
+  const message = buildMessage(payload, answerPreview);
 
   try {
     if (await tryMacNativeNotifier(title, message, settings)) {
@@ -99,20 +100,25 @@ export async function sendSessionNotification(
   }
 }
 
-function buildMessage(payload: NotificationContent): string {
+function buildMessage(payload: NotificationContent, answerPreview?: string): string {
   const parts: string[] = [];
   const sessionLabel = payload.sessionName || payload.sessionId;
-  parts.push(`session ${sessionLabel}`);
+  parts.push(sessionLabel);
 
   if (payload.mode === 'api') {
     const cost = payload.costUsd ?? inferCost(payload);
     if (cost !== undefined) {
-      parts.push(formatUSD(cost));
+      // Round to $0.00 for a concise toast.
+      parts.push(formatUSD(Number(cost.toFixed(2))));
     }
   }
 
   if (payload.characters != null) {
     parts.push(`${formatNumber(payload.characters)} chars`);
+  }
+
+  if (answerPreview) {
+    parts.push(answerPreview);
   }
 
   return parts.join(' · ');

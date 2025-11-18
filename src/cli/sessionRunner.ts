@@ -85,6 +85,7 @@ export async function performSessionRun({
         },
         notificationSettings,
         log,
+        result.answerText?.slice(0, 140),
       );
       return;
     }
@@ -117,6 +118,7 @@ export async function performSessionRun({
       },
       notificationSettings,
       log,
+      answerText.slice(0, 140),
     );
   } catch (error: unknown) {
     const message = formatError(error);

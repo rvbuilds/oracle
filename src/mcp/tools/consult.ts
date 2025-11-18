@@ -129,6 +129,7 @@ export function registerConsultTool(server: McpServer): void {
           )
           .catch(() => {});
 
+      // Stream logs to both the session log and MCP logging notifications, but avoid buffering in memory
       const log = (line?: string): void => {
         logWriter.logLine(line);
         if (line !== undefined) {
