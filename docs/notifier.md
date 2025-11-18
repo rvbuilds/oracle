@@ -19,7 +19,7 @@ Oracle can raise a desktop notification when a session finishes so you don’t h
 
 Notifications are powered by a macOS-first helper plus [`toasted-notifier`](https://github.com/Aetherinox/node-toasted-notifier) as fallback:
 
-- macOS: OracleNotifier.app (arm64, signed) first; falls back to Notification Center via terminal-notifier
+- macOS: OracleNotifier.app (arm64, signed; notarized when built with App Store Connect creds) first; falls back to Notification Center via terminal-notifier
 - Linux: `notify-send`/libnotify
 - Windows: native Toasts via ntfy-toast/SnoreToast
 

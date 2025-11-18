@@ -6,13 +6,16 @@
 2. **Artifacts**
    - [ ] Run `pnpm run build` (ensure `dist/` is current).
    - [ ] Verify `bin` mapping in `package.json` points to `dist/bin/oracle-cli.js`.
-   - [ ] Produce npm tarball and checksums:
-     - `npm pack --pack-destination /tmp` (after build)
-     - Move the tarball into repo root (e.g., `oracle-<version>.tgz`) and generate `*.sha1` / `*.sha256`.
-     - Keep these files handy for the GitHub release; do **not** commit them.
+ - [ ] Produce npm tarball and checksums:
+    - `npm pack --pack-destination /tmp` (after build)
+    - Move the tarball into repo root (e.g., `oracle-<version>.tgz`) and generate `*.sha1` / `*.sha256`.
+    - Keep these files handy for the GitHub release; do **not** commit them.
+  - [ ] Rebuild macOS notifier helper with signing + notarization:
+    - `cd vendor/oracle-notifier && ./build-notifier.sh` (requires `CODESIGN_ID` and `APP_STORE_CONNECT_*`).
+    - Verify tickets: `xcrun stapler validate vendor/oracle-notifier/OracleNotifier.app` and `spctl -a -t exec -vv vendor/oracle-notifier/OracleNotifier.app`.
 3. **Changelog & docs**
-   - [ ] Update `CHANGELOG.md` (or release notes) with highlights.
-   - [ ] Ensure README reflects current CLI options (globs, `--status`, heartbeat behavior).
+  - [ ] Update `CHANGELOG.md` (or release notes) with highlights.
+  - [ ] Ensure README reflects current CLI options (globs, `--status`, heartbeat behavior).
 4. **Validation**
    - [ ] `pnpm vitest`
    - [ ] `pnpm run lint`
