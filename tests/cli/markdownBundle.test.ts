@@ -38,4 +38,14 @@ describe('buildMarkdownBundle', () => {
     expect(bundle.markdown).toContain('keep me');
     expect(bundle.markdown).not.toContain('skip me');
   });
+
+  test('handles prompt-only runs (no files) with system/user headers intact', async () => {
+    const bundle = await buildMarkdownBundle({ prompt: 'Solo', file: [], system: 'SYS' }, {});
+    expect(bundle.markdown).toContain('[SYSTEM]');
+    expect(bundle.markdown).toContain('SYS');
+    expect(bundle.markdown).toContain('[USER]');
+    expect(bundle.markdown).toContain('Solo');
+    expect(bundle.markdown).not.toMatch(/\[FILE:/);
+    expect(bundle.files).toHaveLength(0);
+  });
 });
