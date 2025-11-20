@@ -55,6 +55,7 @@ export async function performSessionRun({
     ...(browserConfig ? { browser: { config: browserConfig } } : {}),
   });
   const notificationSettings = notifications ?? deriveNotificationSettingsFromMetadata(sessionMeta, process.env);
+  const modelForStatus = runOptions.model ?? sessionMeta.model;
   try {
     if (mode === 'browser') {
       if (runOptions.model.startsWith('gemini')) {
@@ -68,10 +69,23 @@ export async function performSessionRun({
       if (!browserConfig) {
         throw new Error('Missing browser configuration for session.');
       }
+      if (modelForStatus) {
+        await sessionStore.updateModelRun(sessionMeta.id, modelForStatus, {
+          status: 'running',
+          startedAt: new Date().toISOString(),
+        });
+      }
       const result = await runBrowserSessionExecution(
         { runOptions, browserConfig, cwd, log, cliVersion: version },
         browserDeps,
       );
+      if (modelForStatus) {
+        await sessionStore.updateModelRun(sessionMeta.id, modelForStatus, {
+          status: 'completed',
+          completedAt: new Date().toISOString(),
+          usage: result.usage,
+        });
+      }
       await sessionStore.updateSession(sessionMeta.id, {
         status: 'completed',
         completedAt: new Date().toISOString(),
@@ -164,6 +178,12 @@ export async function performSessionRun({
     const apiRunOptions: RunOracleOptions = singleModelOverride
       ? { ...runOptions, model: singleModelOverride, models: undefined }
       : runOptions;
+    if (modelForStatus && singleModelOverride == null) {
+      await sessionStore.updateModelRun(sessionMeta.id, modelForStatus, {
+        status: 'running',
+        startedAt: new Date().toISOString(),
+      });
+    }
     const result = await runOracle(apiRunOptions, {
       cwd,
       log,
@@ -181,6 +201,13 @@ export async function performSessionRun({
       transport: undefined,
       error: undefined,
     });
+    if (modelForStatus && singleModelOverride == null) {
+      await sessionStore.updateModelRun(sessionMeta.id, modelForStatus, {
+        status: 'completed',
+        completedAt: new Date().toISOString(),
+        usage: result.usage,
+      });
+    }
     const answerText = extractTextOutput(result.response);
     await sendSessionNotification(
       {
@@ -237,6 +264,12 @@ export async function performSessionRun({
           '- Or rerun with --engine api --render-markdown [--file …] to generate a single markdown bundle you can paste into ChatGPT manually (add --browser-bundle-files if you still want attachments).',
         ),
       );
+    }
+    if (modelForStatus) {
+      await sessionStore.updateModelRun(sessionMeta.id, modelForStatus, {
+        status: 'error',
+        completedAt: new Date().toISOString(),
+      });
     }
     throw error;
   }
