@@ -3,10 +3,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises';
-import type { BrowserAttachment, BrowserLogger } from '../browser/types.js';
+import type { BrowserAttachment, BrowserLogger, CookieParam } from '../browser/types.js';
 import { runBrowserMode } from '../browserMode.js';
 import type { BrowserRunResult } from '../browserMode.js';
 import type { RemoteRunPayload, RemoteRunEvent } from './types.js';
+import { loadChromeCookies } from '../browser/chromeCookies.js';
+import { CHATGPT_URL } from '../browser/constants.js';
 
 export interface RemoteServerOptions {
   host?: string;
@@ -35,6 +37,10 @@ export async function createRemoteServer(
   const authToken = options.token ?? randomBytes(16).toString('hex');
   // Single-flight guard: remote Chrome can only host one run at a time, so we serialize requests.
   let busy = false;
+  let cachedInlineCookies: CookieParam[] | null = null;
+
+  // Initialize host-local cookies once; refresh on demand if missing.
+  cachedInlineCookies = await loadLocalChatgptCookies(logger);
 
   server.on('request', async (req, res) => {
     if (req.method === 'GET' && req.url === '/status') {
@@ -106,6 +112,15 @@ export async function createRemoteServer(
         }
       }) as BrowserLogger;
       automationLogger.verbose = Boolean(payload.options.verbose);
+
+      // Refresh cookies if we don't have any cached yet
+      const hostCookies = cachedInlineCookies?.length ? cachedInlineCookies : await loadLocalChatgptCookies(logger);
+      if (hostCookies && hostCookies.length > 0 && payload.browserConfig) {
+        cachedInlineCookies = hostCookies;
+        payload.browserConfig.inlineCookies = hostCookies;
+        payload.browserConfig.inlineCookiesSource = 'remote-host';
+        payload.browserConfig.cookieSync = true;
+      }
 
       const result = await runBrowser({
         prompt: payload.prompt,
@@ -192,4 +207,42 @@ function sanitizeResult(result: BrowserRunResult): BrowserRunResult {
     chromePort: undefined,
     userDataDir: undefined,
   };
+}
+
+async function loadLocalChatgptCookies(logger: (message: string) => void): Promise<CookieParam[] | null> {
+  try {
+    const cookies = await loadChromeCookies({
+      targetUrl: CHATGPT_URL,
+      profile: 'Default',
+    });
+    if (!cookies || cookies.length === 0) {
+      logger('No local ChatGPT cookies found on remote host. Please log in once; opening ChatGPT...');
+      triggerLocalLoginPrompt(logger);
+      return null;
+    }
+    logger(`Loaded ${cookies.length} local ChatGPT cookies on remote host.`);
+    return cookies;
+  } catch (error) {
+    logger(`Unable to load local ChatGPT cookies on remote host: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+}
+
+function triggerLocalLoginPrompt(logger: (message: string) => void): void {
+  const url = CHATGPT_URL;
+  const opener =
+    process.platform === 'darwin'
+      ? 'open'
+      : process.platform === 'win32'
+        ? 'start'
+        : 'xdg-open';
+  try {
+    // Fire and forget; user completes login in the opened browser window.
+    import('node:child_process').then(({ spawn }) => {
+      spawn(opener, [url], { stdio: 'ignore', detached: true }).unref();
+    });
+    logger(`Opened ${url} locally. Please sign in; subsequent runs will reuse the session.`);
+  } catch {
+    logger(`Please open ${url} in the remote host's browser and sign in; then rerun.`);
+  }
 }

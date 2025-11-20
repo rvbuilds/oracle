@@ -845,8 +845,12 @@ async function runRootCommand(options: CliOptions): Promise<void> {
 
   let browserDeps: BrowserSessionRunnerDeps | undefined;
   if (browserConfig && remoteHost) {
-    if (remoteCookieSource === 'local') {
-      await populateRemoteCookiesFromLocal(browserConfig);
+    if (remoteCookieSource !== 'none') {
+      console.log(
+        chalk.dim(
+          `Remote cookie shipping is disabled; ignoring --remote-cookie-source=${remoteCookieSource}. The remote host will use its own Chrome cookies.`,
+        ),
+      );
     }
     browserDeps = {
       executeBrowser: createRemoteBrowserExecutor({ host: remoteHost, token: remoteToken }),
