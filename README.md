@@ -33,24 +33,6 @@ oracle session <id> --render
 oracle
 ```
 
-## Remote browser service (`oracle serve`)
-
-Keep Chrome running on a signed-in host and drive it from another machine without shipping cookies:
-
-1. On the host Mac, run `oracle serve` (or `oracle serve --port 9473 --token abc...`). It launches Chrome, prints `Listening at <host>:<port>` plus an access token, and exits if ChatGPT isn’t logged in so you can sign in and restart.
-2. On the client, run `oracle --engine browser --remote-host <host:port> --remote-token <token> -p "..." --file <paths>`.
-3. To skip flags, set defaults in `~/.oracle/config.json`:
-   ```json5
-   {
-     remote: { host: "192.168.64.2:9473", token: "c4e5f9..." }
-   }
-  ```
-  Env vars (`ORACLE_REMOTE_HOST`, `ORACLE_REMOTE_TOKEN`) still override the config.
-
-Notes:
-- Cookies never cross the wire; the host Chrome profile must stay signed in. If not, `oracle serve` opens chatgpt.com and exits.
-- Remote mode requires `--engine browser` (or an auto-selected browser engine). Background/detached runs are disabled so logs can stream.
-
 ### Clipboard bundle (semi-manual)
 - Build the markdown bundle, print it, and copy it to your clipboard in one go:
   ```bash
@@ -110,8 +92,7 @@ Put defaults in `~/.oracle/config.json` (JSON5). Example:
 See `docs/configuration.md` for precedence and full schema.
 
 ## More docs
-
-- Browser mode & forks: [docs/browser-mode.md](docs/browser-mode.md), [docs/chromium-forks.md](docs/chromium-forks.md), [docs/linux.md](docs/linux.md)
+- Browser mode & forks: [docs/browser-mode.md](docs/browser-mode.md) (includes `oracle serve` remote service), [docs/chromium-forks.md](docs/chromium-forks.md), [docs/linux.md](docs/linux.md)
 - MCP: [docs/mcp.md](docs/mcp.md)
 - OpenAI/Azure endpoints: [docs/openai-endpoints.md](docs/openai-endpoints.md)
 - Manual smokes: [docs/manual-tests.md](docs/manual-tests.md)
