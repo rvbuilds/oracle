@@ -9,6 +9,23 @@ export default defineConfig({
       all: true,
       // Measure the real TypeScript sources (the repo doesn’t ship .js in src).
       include: ['src/**/*.ts'],
+      // Exclude interactive/IPC entrypoints that aren’t practical to unit test.
+      exclude: [
+        'src/cli/tui/**',
+        'src/remote/**',
+        'src/mcp/**',
+        'src/browser/actions/**',
+        'src/browser/index.ts',
+        'src/browser/pageActions.ts',
+        'src/browser/chromeLifecycle.ts',
+        'src/browserMode.ts',
+        'src/heartbeat.ts',
+        'src/oracle.ts',
+        'src/oracle/claude.ts',
+        'src/oracle/modelRunner.ts',
+        'src/oracle/types.ts',
+        'src/types/**',
+      ],
     },
   },
 });
