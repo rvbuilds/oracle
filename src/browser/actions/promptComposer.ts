@@ -76,7 +76,7 @@ export async function submitPrompt(
 
   // Some pages (notably ChatGPT when subscriptions/widgets load) need a brief settle
   // before the send button becomes enabled; give it a short breather to avoid races.
-  await delay(300);
+  await delay(500);
 
   const primarySelectorLiteral = JSON.stringify(PROMPT_PRIMARY_SELECTOR);
   const fallbackSelectorLiteral = JSON.stringify(PROMPT_FALLBACK_SELECTOR);
@@ -197,7 +197,7 @@ async function clickAnswerNowIfPresent(Runtime: ChromeClient['Runtime'], logger?
     const status = result.value as string;
     if (status === 'clicked') {
       logger?.('Clicked "Answer now" gate');
-      await delay(300);
+      await delay(500);
       return;
     }
     if (status === 'missing') return;
