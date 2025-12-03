@@ -221,6 +221,21 @@ export async function runBrowserMode(options: BrowserRunOptions): Promise<Browse
       );
     }
 
+    if (cookieSyncEnabled && !manualLogin && (appliedCookies ?? 0) === 0 && !config.inlineCookies) {
+      throw new BrowserAutomationError(
+        'No ChatGPT cookies were applied from your Chrome profile; cannot proceed in browser mode. ' +
+          'Make sure ChatGPT is signed in in the selected profile or rebuild the keytar native module if it failed to load.',
+        {
+          stage: 'execute-browser',
+          details: {
+            profile: config.chromeProfile ?? 'Default',
+            cookiePath: config.chromeCookiePath ?? null,
+            hint: 'Rebuild keytar: PYTHON=/usr/bin/python3 /Users/steipete/Projects/oracle/runner npx node-gyp rebuild (run inside the keytar path from the error), then retry.',
+          },
+        },
+      );
+    }
+
     const baseUrl = CHATGPT_URL;
     // First load the base ChatGPT homepage to satisfy potential interstitials,
     // then hop to the requested URL if it differs.

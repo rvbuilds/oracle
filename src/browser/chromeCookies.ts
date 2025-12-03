@@ -2,6 +2,7 @@ import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import chromeCookies from 'chrome-cookies-secure';
 import { COOKIE_URLS } from './constants.js';
 import type { CookieParam } from './types.js';
@@ -80,13 +81,19 @@ async function ensureMacKeychainReadable(): Promise<void> {
   // chrome-cookies-secure can hang forever when the platform keyring rejects access (e.g., SSH/no GUI).
   // Probe the keyring ourselves with a timeout so callers fail fast instead of blocking the run.
   let keytar: KeytarLike | null = null;
+  let keytarPath: string | null = null;
   try {
+    const require = createRequire(import.meta.url);
+    keytarPath = require.resolve('keytar');
     const keytarModule = await import('keytar');
     keytar = (keytarModule.default ?? keytarModule) as KeytarLike;
   } catch (error) {
     const base = error instanceof Error ? error.message : String(error);
+    const rebuildHint = keytarPath
+      ? ` You may need to rebuild keytar: PYTHON=/usr/bin/python3 /Users/steipete/Projects/oracle/runner npx node-gyp rebuild (run inside ${path.dirname(keytarPath)}).`
+      : '';
     throw new Error(
-      `Failed to load keytar for secure cookie copy (${base}). Install keyring deps (macOS Keychain / libsecret) or rerun with --render --copy to paste into ChatGPT manually.`,
+      `Failed to load keytar for secure cookie copy (${base}). Install keyring deps (macOS Keychain / libsecret) or rerun with --render --copy to paste into ChatGPT manually.${rebuildHint}`,
     );
   }
   const password = await settleWithTimeout(
