@@ -19,6 +19,8 @@ import type {
   ModelName,
   ModelOverridesConfig,
   PartialMode,
+  ReasoningEffort,
+  ReasoningMode,
   ThinkingTimeLevel,
 } from "./oracle.js";
 import { DEFAULT_MODEL } from "./oracle/config.js";
@@ -213,6 +215,8 @@ export interface StoredRunOptions {
   maxFileSizeBytes?: number;
   model?: string;
   models?: ModelName[];
+  reasoningEffort?: ReasoningEffort;
+  reasoningMode?: ReasoningMode;
   /** Responses API chaining (maps to `previous_response_id`). */
   previousResponseId?: string;
   /** Optional parent session slug when using `--followup <sessionId>`. */
@@ -580,6 +584,8 @@ export async function initializeSession(
       maxFileSizeBytes: options.maxFileSizeBytes,
       model: options.model,
       models: modelList,
+      reasoningEffort: options.reasoningEffort,
+      reasoningMode: options.reasoningMode,
       previousResponseId: options.previousResponseId,
       followupSessionId: options.followupSessionId,
       followupModel: options.followupModel,
