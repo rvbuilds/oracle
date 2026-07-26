@@ -480,6 +480,24 @@ function buildThinkingTimeExpression(
           if (itemText === '高' || ariaLabel === '高') return item;
         }
       }
+      if (
+        TARGET_IS_GPT56_MODEL &&
+        TARGET_LEVEL === 'heavy' &&
+        isIntelligenceEffortMenu(menu)
+      ) {
+        for (const item of items) {
+          const itemText = normalize(
+            (item.textContent ?? '') + ' ' + (item.getAttribute?.('aria-label') ?? ''),
+          );
+          if (
+            hasToken(itemText, 'pro') &&
+            !itemText.includes('gpt') &&
+            !/(?:^|\\s)5[ .-]?6(?:\\s|$)/.test(itemText)
+          ) {
+            return item;
+          }
+        }
+      }
       return null;
     };
     const countEffortLevels = (menu) => {
@@ -579,19 +597,37 @@ function buildThinkingTimeExpression(
     const currentEffortPillMatchesTarget = (trigger, modelKindOverride = null) => {
       if (currentProEffortPillMatchesTarget(trigger, modelKindOverride)) return true;
       const button = freshComposerTrigger(trigger) || findModelButton();
+      const normalizedLabel = normalize(
+        (button?.textContent ?? '') + ' ' + (button?.getAttribute?.('aria-label') ?? ''),
+      );
+      if (
+        TARGET_IS_GPT56_MODEL &&
+        TARGET_LEVEL === 'heavy' &&
+        hasToken(normalizedLabel, 'pro')
+      ) {
+        return true;
+      }
       if ((modelKindOverride || TARGET_MODEL_KIND || modelKindFromNode(button)) === 'pro') {
         return false;
       }
-      const label = (button?.textContent ?? '') + ' ' + (button?.getAttribute?.('aria-label') ?? '');
-      return matchesLevel(label);
+      return matchesLevel(normalizedLabel);
     };
     const selectAndVerify = async (trigger, findOption, modelKindOverride = null) => {
-      const option = findOption();
       const triggerModelKind =
         modelKindOverride ||
         TARGET_MODEL_KIND ||
         modelKindFromNode(trigger) ||
         effectiveTargetModelKind();
+      const option = findOption();
+      if (
+        !option &&
+        TARGET_IS_GPT56_MODEL &&
+        TARGET_LEVEL === 'heavy' &&
+        currentEffortPillMatchesTarget(trigger, triggerModelKind)
+      ) {
+        closeOpenMenus();
+        return { status: 'already-selected', label: trigger.textContent?.trim?.() || null };
+      }
       if (!option) return failure('option-not-found', { modelKind: triggerModelKind });
       const label = option.textContent?.trim?.() || null;
       if (optionIsSelected(option)) {

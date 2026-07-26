@@ -350,6 +350,7 @@ describe("browser thinking-time selection expression", () => {
         private readonly attributes: Readonly<Record<string, string>> = {},
         private readonly children: FakeElement[] = [],
         private readonly nestedIntelligence: FakeElement | null = null,
+        private readonly onDispatch?: () => void,
       ) {
         super();
       }
@@ -375,6 +376,10 @@ describe("browser thinking-time selection expression", () => {
         );
       }
       focus(): void {}
+      override dispatchEvent(event: unknown): boolean {
+        this.onDispatch?.();
+        return super.dispatchEvent(event);
+      }
       getBoundingClientRect(): { width: number; height: number } {
         return { width: 144, height: 36 };
       }
@@ -473,6 +478,134 @@ describe("browser thinking-time selection expression", () => {
         FakeElement,
       ),
     ).resolves.toEqual({ status: "already-selected", label: "Pro" });
+
+    const solHeavyExpression = buildThinkingTimeExpressionForTest("heavy", "gpt-5.6-sol");
+    const currentMenuItems = [
+      new FakeElement("ModelGPT-5.6 Sol", { role: "menuitem", "aria-haspopup": "menu" }),
+      new FakeElement("EffortPro", { role: "menuitem", "aria-haspopup": "menu" }),
+    ];
+    const currentIntelligenceGroup = new FakeElement(
+      "ModelGPT-5.6 SolEffortPro",
+      { "data-testid": "composer-intelligence-picker-content", role: "group" },
+      currentMenuItems,
+    );
+    const currentOuterMenu = new FakeElement(
+      currentIntelligenceGroup.textContent,
+      { role: "menu" },
+      currentMenuItems,
+      currentIntelligenceGroup,
+    );
+    const proOnlyDocumentStub = {
+      ...documentStub,
+      querySelector: (selector: string) => {
+        if (selector.includes("composer-intelligence-pro-thinking-effort-trigger")) return null;
+        if (selector.includes("composer-intelligence-picker-content")) {
+          return currentIntelligenceGroup;
+        }
+        if (
+          selector.includes("model-switcher-dropdown-button") ||
+          selector.includes("__composer-pill")
+        ) {
+          return modelButton;
+        }
+        return null;
+      },
+      querySelectorAll: (selector: string) => {
+        if (selector.includes("__composer-pill")) return [modelButton];
+        if (selector.includes('role="menu"') || selector.includes("data-radix")) {
+          return [currentOuterMenu];
+        }
+        return [];
+      },
+    };
+    const evaluateSolHeavy = new Function(
+      "document",
+      "performance",
+      "setTimeout",
+      "window",
+      "EventTarget",
+      "PointerEvent",
+      "MouseEvent",
+      "HTMLElement",
+      `return ${solHeavyExpression};`,
+    ) as typeof evaluate;
+
+    await expect(
+      evaluateSolHeavy(
+        proOnlyDocumentStub,
+        performanceStub,
+        (callback: () => void) => callback(),
+        { PointerEvent: FakeMouseEvent, MouseEvent: FakeMouseEvent, Event: FakeMouseEvent },
+        FakeEventTarget,
+        FakeMouseEvent,
+        FakeMouseEvent,
+        FakeElement,
+      ),
+    ).resolves.toEqual({ status: "already-selected", label: "Pro" });
+
+    const proAttributes: Record<string, string> = {
+      role: "menuitemradio",
+      "aria-checked": "false",
+      "data-state": "unchecked",
+    };
+    const selectablePro = new FakeElement("Pro", proAttributes, [], null, () => {
+      proAttributes["aria-checked"] = "true";
+      proAttributes["data-state"] = "checked";
+    });
+    const selectableItems = [
+      selectablePro,
+      new FakeElement("GPT-5.6 Sol", { role: "menuitem", "aria-haspopup": "menu" }),
+    ];
+    const selectableGroup = new FakeElement(
+      "Pro GPT-5.6 Sol",
+      { "data-testid": "composer-intelligence-picker-content", role: "group" },
+      selectableItems,
+    );
+    const selectableMenu = new FakeElement(
+      selectableGroup.textContent,
+      { role: "menu" },
+      selectableItems,
+      selectableGroup,
+    );
+    const solModelButton = new FakeElement("Extra High", {
+      class: "__composer-pill",
+      "aria-expanded": "true",
+      "aria-haspopup": "menu",
+    });
+    const selectableDocumentStub = {
+      ...documentStub,
+      querySelector: (selector: string) => {
+        if (selector.includes("composer-intelligence-pro-thinking-effort-trigger")) return null;
+        if (selector.includes("composer-intelligence-picker-content")) return selectableGroup;
+        if (
+          selector.includes("model-switcher-dropdown-button") ||
+          selector.includes("__composer-pill")
+        ) {
+          return solModelButton;
+        }
+        return null;
+      },
+      querySelectorAll: (selector: string) => {
+        if (selector.includes("__composer-pill")) return [solModelButton];
+        if (selector.includes('role="menu"') || selector.includes("data-radix")) {
+          return [selectableMenu];
+        }
+        return [];
+      },
+    };
+
+    await expect(
+      evaluateSolHeavy(
+        selectableDocumentStub,
+        performanceStub,
+        (callback: () => void) => callback(),
+        { PointerEvent: FakeMouseEvent, MouseEvent: FakeMouseEvent, Event: FakeMouseEvent },
+        FakeEventTarget,
+        FakeMouseEvent,
+        FakeMouseEvent,
+        FakeElement,
+      ),
+    ).resolves.toEqual({ status: "switched", label: "Pro" });
   });
 
   it("selects exact Chinese Intelligence tiers without prefix collisions", async () => {
