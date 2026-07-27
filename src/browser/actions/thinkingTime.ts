@@ -456,6 +456,24 @@ function buildThinkingTimeExpression(
           return null;
         }
       }
+      if (
+        TARGET_IS_GPT56_MODEL &&
+        TARGET_LEVEL === 'heavy' &&
+        isIntelligenceEffortMenu(menu)
+      ) {
+        for (const item of items) {
+          const itemText = normalize(
+            (item.textContent ?? '') + ' ' + (item.getAttribute?.('aria-label') ?? ''),
+          );
+          if (
+            hasToken(itemText, 'pro') &&
+            !itemText.includes('gpt') &&
+            !/(?:^|\\s)5[ .-]?6(?:\\s|$)/.test(itemText)
+          ) {
+            return item;
+          }
+        }
+      }
       for (const item of items) {
         const itemText = normalize(
           (item.textContent ?? '') + ' ' + (item.getAttribute?.('aria-label') ?? ''),
@@ -478,24 +496,6 @@ function buildThinkingTimeExpression(
           const itemText = normalize(item.textContent ?? '');
           const ariaLabel = normalize(item.getAttribute?.('aria-label') ?? '');
           if (itemText === '高' || ariaLabel === '高') return item;
-        }
-      }
-      if (
-        TARGET_IS_GPT56_MODEL &&
-        TARGET_LEVEL === 'heavy' &&
-        isIntelligenceEffortMenu(menu)
-      ) {
-        for (const item of items) {
-          const itemText = normalize(
-            (item.textContent ?? '') + ' ' + (item.getAttribute?.('aria-label') ?? ''),
-          );
-          if (
-            hasToken(itemText, 'pro') &&
-            !itemText.includes('gpt') &&
-            !/(?:^|\\s)5[ .-]?6(?:\\s|$)/.test(itemText)
-          ) {
-            return item;
-          }
         }
       }
       return null;
