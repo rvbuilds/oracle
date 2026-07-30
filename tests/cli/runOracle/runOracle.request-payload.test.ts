@@ -73,6 +73,50 @@ describe("runOracle request payload", () => {
     expect(logs.join("\n")).toContain("gpt-5.6-sol[pro/max]");
   });
 
+  test.each(["none", "low", "medium", "high", "xhigh", "max"] as const)(
+    "forwards GPT-5.6 reasoning effort %s",
+    async (reasoningEffort) => {
+      const stream = new MockStream([], buildResponse());
+      const client = new MockClient(stream);
+      await runOracle(
+        {
+          prompt: "Verify reasoning effort forwarding",
+          model: "gpt-5.6-sol",
+          reasoningEffort,
+          background: false,
+        },
+        {
+          apiKey: "sk-test",
+          client,
+          log: () => {},
+        },
+      );
+      expect(client.lastRequest?.reasoning).toEqual({ effort: reasoningEffort });
+    },
+  );
+
+  test.each(["standard", "pro"] as const)(
+    "forwards GPT-5.6 reasoning mode %s",
+    async (reasoningMode) => {
+      const stream = new MockStream([], buildResponse());
+      const client = new MockClient(stream);
+      await runOracle(
+        {
+          prompt: "Verify reasoning mode forwarding",
+          model: "gpt-5.6-sol",
+          reasoningMode,
+          background: false,
+        },
+        {
+          apiKey: "sk-test",
+          client,
+          log: () => {},
+        },
+      );
+      expect(client.lastRequest?.reasoning).toEqual({ effort: "xhigh", mode: reasoningMode });
+    },
+  );
+
   test("rejects reasoning mode for non-GPT-5.6 models", async () => {
     const stream = new MockStream([], buildResponse());
     const client = new MockClient(stream);

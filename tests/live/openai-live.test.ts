@@ -99,7 +99,9 @@ if (!ENABLE_LIVE || !LIVE_API_KEY) {
             reasoningMode: "pro",
             silent: true,
             heartbeatIntervalMs: 2000,
-            maxOutput: 64,
+            // Reasoning tokens count toward max_output_tokens. Keep enough headroom
+            // for Pro + max to complete and still return the requested visible text.
+            maxOutput: 25_000,
           },
           sharedDeps,
         );
