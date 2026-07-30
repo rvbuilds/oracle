@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { buildBrowserConfig, resolveBrowserModelLabel } from "../../src/cli/browserConfig.js";
 
 describe("buildBrowserConfig", () => {
@@ -166,6 +166,32 @@ describe("buildBrowserConfig", () => {
       debug: true,
       allowCookieErrors: true,
     });
+  });
+
+  test("accepts a valid explicit browser duration without a warning", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const config = await buildBrowserConfig({
+      model: "gpt-5.5-pro",
+      browserTimeout: "1h30m",
+    });
+
+    expect(config.timeoutMs).toBe(5_400_000);
+    expect(logSpy).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
+  test("warns and uses the fallback for a malformed explicit browser duration", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const config = await buildBrowserConfig({
+      model: "gpt-5.5-pro",
+      browserTimeout: "1h!30m",
+    });
+
+    expect(config.timeoutMs).toBe(1_200_000);
+    expect(logSpy).toHaveBeenCalledWith(
+      'Warning: invalid --browser-timeout duration "1h!30m"; using fallback 1200000ms.',
+    );
+    logSpy.mockRestore();
   });
 
   test("prefers explicit browser model label when provided", async () => {
