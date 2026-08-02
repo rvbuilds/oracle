@@ -172,6 +172,10 @@ function shouldPreserveBrowserOnError(error: unknown, headless: boolean): boolea
   return classifyPreservedBrowserError(error, headless) !== null;
 }
 
+function normalizeAuthenticatedModelSelectionError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
+}
+
 function shouldKeepLocalBrowserOpen(options: {
   effectiveKeepBrowser: boolean;
   preserveBrowserOnError: boolean;
@@ -1474,12 +1478,9 @@ export async function runBrowserMode(options: BrowserRunOptions): Promise<Browse
           },
         ),
       ).catch((error) => {
-        const base = error instanceof Error ? error.message : String(error);
-        const hint =
-          appliedCookies === 0
-            ? " No cookies were applied; log in to ChatGPT in Chrome or provide inline cookies (--browser-inline-cookies[(-file)] or ORACLE_BROWSER_COOKIES_JSON)."
-            : "";
-        throw new Error(`${base}${hint}`);
+        // Login has already been verified above. Preserve the picker failure instead of
+        // misdiagnosing an unavailable model as missing cookies.
+        throw normalizeAuthenticatedModelSelectionError(error);
       });
       await raceWithDisconnect(ensurePromptReady(Runtime, config.inputTimeoutMs, logger));
       logger(
@@ -3881,6 +3882,7 @@ export const __test__ = {
   isManualLoginProfileInitialized,
   isImageOnlyUiChromeText,
   listIgnoredRemoteChromeFlags,
+  normalizeAuthenticatedModelSelectionError,
   resolveManualLoginWaitMs,
   shouldCleanupBlankTabsAfterLastLease,
   shouldCloseOwnedRunTargetAfterRun,

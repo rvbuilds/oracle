@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- Browser: preserve authenticated model-picker errors instead of appending a misleading cookie/login hint after login has already been verified.
 - Browser: distinguish requested CLI model keys from verified ChatGPT picker labels without inferring a server-side GPT version from a generic label. Fixes #317. Thanks @DragonFSKY!
 - Browser: recognize GPT-5.6 Sol as the selected model when ChatGPT exposes Pro in its independent effort pill. Thanks @jung0han!
 - Browser: treat WSL's systemd-resolved loopback DNS stub as localhost when connecting to a freshly launched Chrome DevTools endpoint. Thanks @Rokurolize!
