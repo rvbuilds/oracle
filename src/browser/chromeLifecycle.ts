@@ -1,27 +1,24 @@
 import { rm } from "node:fs/promises";
-import { readFileSync } from "node:fs";
-import os from "node:os";
 import net from "node:net";
 import CDP from "chrome-remote-interface";
 import { launch, Launcher, type LaunchedChrome } from "chrome-launcher";
 import type { BrowserLogger, ResolvedBrowserConfig, ChromeClient } from "./types.js";
 import { cleanupStaleProfileState } from "./profileState.js";
 import { delay } from "./utils.js";
+import { isWsl, resolveWslChromeLaunchRoute } from "./wslHost.js";
 
 export async function launchChrome(
   config: ResolvedBrowserConfig,
   userDataDir: string,
   logger: BrowserLogger,
 ) {
-  const connectHost = resolveRemoteDebugHost();
-  const debugBindAddress = connectHost && connectHost !== "127.0.0.1" ? "0.0.0.0" : connectHost;
+  const { connectHost, debugBindAddress, usePatchedLauncher } = resolveWslChromeLaunchRoute();
   const debugPort = config.debugPort ?? parseDebugPortEnv();
   const chromeFlags = buildChromeFlags(
     config.headless ?? false,
     debugBindAddress,
     config.hideWindow ?? false,
   );
-  const usePatchedLauncher = Boolean(connectHost && connectHost !== "127.0.0.1");
   // copy-profile reuses a copied signed-in profile whose cookies are
   // Keychain-encrypted, so it must launch with the real Keychain (not mocked):
   // strip the keychain-mocking flags from both chrome-launcher's defaults and
@@ -561,22 +558,108 @@ export async function closeTab(
   targetId: string,
   logger: BrowserLogger,
   host?: string,
-): Promise<void> {
+): Promise<boolean> {
   const effectiveHost = host ?? "127.0.0.1";
   try {
     await CDP.Close({ host: effectiveHost, port, id: targetId });
-    logger(`Closed isolated browser tab (target=${targetId})`);
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      await delay(25);
+      let targets: Array<{ id?: string; targetId?: string }>;
+      try {
+        targets = (await CDP.List({ host: effectiveHost, port })) as Array<{
+          id?: string;
+          targetId?: string;
+        }>;
+      } catch {
+        continue;
+      }
+      if (!targets.some((target) => (target.targetId ?? target.id) === targetId)) {
+        logger(`Closed isolated browser tab (target=${targetId})`);
+        return true;
+      }
+    }
+    logger(`Browser tab close was not confirmed (target=${targetId})`);
+    return false;
   } catch (error) {
+    try {
+      const targets = (await CDP.List({ host: effectiveHost, port })) as Array<{
+        id?: string;
+        targetId?: string;
+      }>;
+      if (!targets.some((target) => (target.targetId ?? target.id) === targetId)) {
+        logger(`Closed isolated browser tab (target=${targetId})`);
+        return true;
+      }
+    } catch {
+      // Preserve the original close error below.
+    }
     const message = error instanceof Error ? error.message : String(error);
     logger(`Failed to close browser tab ${targetId}: ${message}`);
+    return false;
   }
+}
+
+export async function createChromePageTarget(
+  port: number,
+  logger: BrowserLogger,
+  host?: string,
+): Promise<string | undefined> {
+  const effectiveHost = host ?? "127.0.0.1";
+  try {
+    const created = (await CDP.New({
+      host: effectiveHost,
+      port,
+      url: "about:blank",
+    })) as { id?: string; targetId?: string };
+    const createdTargetId = created.targetId ?? created.id;
+    if (!createdTargetId) {
+      logger("Failed to create a replacement Chrome tab.");
+      return undefined;
+    }
+    logger(`Opened replacement Chrome tab (target=${createdTargetId})`);
+    return createdTargetId;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger(`Failed to create a replacement Chrome tab: ${message}`);
+    return undefined;
+  }
+}
+
+export async function ensureChromePageTargetAfterClose(
+  port: number,
+  closingTargetId: string,
+  logger: BrowserLogger,
+  host?: string,
+): Promise<string | undefined> {
+  const effectiveHost = host ?? "127.0.0.1";
+  try {
+    const targets = (await CDP.List({ host: effectiveHost, port })) as Array<{
+      id?: string;
+      targetId?: string;
+      type?: string;
+    }>;
+    const existingPageTargetId = targets
+      .filter((target) => target.type === "page")
+      .map((target) => target.targetId ?? target.id)
+      .find((targetId): targetId is string => Boolean(targetId) && targetId !== closingTargetId);
+    if (existingPageTargetId) {
+      return existingPageTargetId;
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger(`Failed to inspect Chrome tabs before closing ${closingTargetId}: ${message}`);
+  }
+  return await createChromePageTarget(port, logger, host);
 }
 
 export async function closeBlankChromeTabs(
   port: number,
   logger: BrowserLogger,
   host?: string,
-  options?: { excludeTargetIds?: Iterable<string | null | undefined> },
+  options?: {
+    excludeTargetIds?: Iterable<string | null | undefined>;
+    preserveOneBlank?: boolean;
+  },
 ): Promise<void> {
   const effectiveHost = host ?? "127.0.0.1";
   const excluded = new Set(
@@ -598,10 +681,22 @@ export async function closeBlankChromeTabs(
     return;
   }
 
+  const preservedBlankTargetId = options?.preserveOneBlank
+    ? targets
+        .filter(isBlankPageTarget)
+        .map((target) => target.targetId ?? target.id)
+        .filter((targetId): targetId is string => Boolean(targetId))
+        .sort()[0]
+    : undefined;
   let closed = 0;
   for (const target of targets) {
     const targetId = target.targetId ?? target.id;
-    if (!targetId || excluded.has(targetId) || !isBlankPageTarget(target)) {
+    if (
+      !targetId ||
+      targetId === preservedBlankTargetId ||
+      excluded.has(targetId) ||
+      !isBlankPageTarget(target)
+    ) {
       continue;
     }
     try {
@@ -668,6 +763,12 @@ function buildChromeFlags(
     flags.push("--window-position=-32000,-32000");
   }
 
+  // Opt-in only: container/CI Chromium often cannot use the sandbox. Callers must
+  // set ORACLE_CHROME_NO_SANDBOX=1 explicitly (never default this on).
+  if (process.env.ORACLE_CHROME_NO_SANDBOX === "1") {
+    flags.push("--no-sandbox", "--disable-dev-shm-usage");
+  }
+
   return flags;
 }
 
@@ -709,40 +810,6 @@ function parseDebugPortEnv(): number | null {
     return null;
   }
   return value;
-}
-
-function resolveRemoteDebugHost(): string | null {
-  const override =
-    process.env.ORACLE_BROWSER_REMOTE_DEBUG_HOST?.trim() || process.env.WSL_HOST_IP?.trim();
-  if (override) {
-    return override;
-  }
-  if (!isWsl()) {
-    return null;
-  }
-  try {
-    const resolv = readFileSync("/etc/resolv.conf", "utf8");
-    for (const line of resolv.split("\n")) {
-      const match = line.match(/^nameserver\s+([0-9.]+)/);
-      if (match?.[1]) {
-        return match[1];
-      }
-    }
-  } catch {
-    // ignore; fall back to localhost
-  }
-  return null;
-}
-
-function isWsl(): boolean {
-  if (process.platform !== "linux") {
-    return false;
-  }
-  if (process.env.WSL_DISTRO_NAME) {
-    return true;
-  }
-  const release = os.release();
-  return release.toLowerCase().includes("microsoft");
 }
 
 async function launchWithCustomHost({
