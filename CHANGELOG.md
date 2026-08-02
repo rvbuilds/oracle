@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- Browser: treat WSL's systemd-resolved loopback DNS stub as localhost when connecting to a freshly launched Chrome DevTools endpoint. Thanks @Rokurolize!
 - CLI: reject junk between duration tokens and warn when malformed browser duration flags fall back to defaults. Thanks @devYRPauli!
 - Browser: run long local Pro consultations in a detached worker while the CLI remains attached to its session log, so unexpected foreground termination cannot stop answer capture; Ctrl-C still cancels the worker. Thanks @Rokurolize!
 - Browser: recognize ChatGPT's separate Pro effort control as the selected maximum effort for GPT-5.6 Sol when `--browser-thinking-time heavy` is requested. Thanks @Rokurolize!
