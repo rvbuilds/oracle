@@ -29,8 +29,8 @@ importers:
         specifier: ^1.30.0
         version: 1.30.0(zod@4.4.3)
       '@steipete/sweet-cookie':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.4.1
+        version: 0.4.1
       chalk:
         specifier: ^6.0.0
         version: 6.0.0
@@ -938,8 +938,8 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@steipete/sweet-cookie@0.4.0':
-    resolution: {integrity: sha512-SREuwUPPVZOj0X4lp+3uN7/sP/I6J2HYY50usKfb5+uLSKUrrlU0TkKPaOx0XAKNR7VC4DpjbsVm0Z7hIo6U8w==}
+  '@steipete/sweet-cookie@0.4.1':
+    resolution: {integrity: sha512-6cuWTGeblwzMw4/3uMzBEmgH1B+crCkJJlmTVu4vzbhG2NhAH8sMWv57fQ8JZY0nqW2ldM0/c2JM0UeQQFyJ3g==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -3096,7 +3096,7 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@steipete/sweet-cookie@0.4.0': {}
+  '@steipete/sweet-cookie@0.4.1': {}
 
   '@tybys/wasm-util@0.10.3':
     dependencies:
