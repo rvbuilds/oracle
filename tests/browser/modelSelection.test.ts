@@ -1437,6 +1437,26 @@ describe("browser model selection matchers", () => {
     expect(logger).toHaveBeenCalledWith("Model picker: current model (label unavailable)");
   });
 
+  it("does not reject GPT-5.6 Sol when the picker reports success without a label", async () => {
+    const runtime = {
+      evaluate: vi.fn().mockResolvedValue({
+        result: { value: { status: "already-selected", label: null } },
+      }),
+    };
+    const logger = vi.fn();
+
+    await expect(
+      ensureModelSelection(runtime as never, "gpt-5.6-sol", logger as never, "select"),
+    ).resolves.toMatchObject({
+      requestedModel: "gpt-5.6-sol",
+      resolvedLabel: null,
+      status: "already-selected",
+      strategy: "select",
+      verified: false,
+    });
+    expect(logger).toHaveBeenCalledWith("Model picker: current model (label unavailable)");
+  });
+
   it("builds composer footer matchers for generic ChatGPT header states", () => {
     expect(buildComposerSignalMatchersForTest("GPT-5.5 Pro")).toEqual({
       includesAny: ["pro"],

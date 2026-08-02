@@ -67,8 +67,8 @@ export async function ensureModelSelection(
     case "already-selected":
     case "switched": {
       const observedLabel = result.label?.trim() || null;
-      if (strategy !== "current") {
-        assertResolvedModelSelection(desiredModel, observedLabel ?? "");
+      if (strategy !== "current" && observedLabel !== null) {
+        assertResolvedModelSelection(desiredModel, observedLabel);
       }
       logger(`Model picker: ${observedLabel ?? "current model (label unavailable)"}`);
       return {
