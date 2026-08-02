@@ -1,12 +1,26 @@
 # Changelog
 
-## 0.16.2 — Unreleased
+## 0.17.0 — Unreleased
+
+### Added
+
+- API: add explicit GPT-5.6 reasoning mode and effort controls, including Pro mode, session persistence, long-run handling, and fail-closed route validation. Thanks @enki!
+
+### Changed
+
+- Dependencies: update Google GenAI, MCP SDK, OpenAI, Chalk, Shiki, TokenTally, Puppeteer, Chrome DevTools protocol, Oxc tooling, and related packages.
 
 ### Fixed
 
+- Browser: preserve authenticated model-picker errors instead of appending a misleading cookie/login hint after login has already been verified.
+- Browser: distinguish requested CLI model keys from verified ChatGPT picker labels without inferring a server-side GPT version from a generic label. Fixes #317. Thanks @DragonFSKY!
+- Browser: recognize GPT-5.6 Sol as the selected model when ChatGPT exposes Pro in its independent effort pill. Thanks @jung0han!
+- Browser: treat WSL's systemd-resolved loopback DNS stub as localhost when connecting to a freshly launched Chrome DevTools endpoint. Thanks @Rokurolize!
+- CLI: reject junk between duration tokens and warn when malformed browser duration flags fall back to defaults. Thanks @devYRPauli!
 - Browser: run long local Pro consultations in a detached worker while the CLI remains attached to its session log, so unexpected foreground termination cannot stop answer capture; Ctrl-C still cancels the worker. Thanks @Rokurolize!
 - Browser: recognize ChatGPT's separate Pro effort control as the selected maximum effort for GPT-5.6 Sol when `--browser-thinking-time heavy` is requested. Thanks @Rokurolize!
 - Gemini: type `.mp4`, `.mov`, and `.webm` uploads as video so Gemini receives them instead of silently discarding generic binary uploads. Thanks @mkubenka!
+- Browser: wait for saved conversation turns to hydrate before retrying capture after a reload or reattach, and reject shell-only stop controls as recovery evidence. Thanks @pdurlej!
 
 ## 0.16.1 — 2026-07-23
 
