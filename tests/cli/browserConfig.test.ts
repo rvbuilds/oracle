@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { buildBrowserConfig, resolveBrowserModelLabel } from "../../src/cli/browserConfig.js";
 
 describe("buildBrowserConfig", () => {
@@ -166,6 +166,85 @@ describe("buildBrowserConfig", () => {
       debug: true,
       allowCookieErrors: true,
     });
+  });
+
+  test("accepts a valid explicit browser duration without a warning", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const config = await buildBrowserConfig({
+      model: "gpt-5.5-pro",
+      browserTimeout: "1h30m",
+    });
+
+    expect(config.timeoutMs).toBe(5_400_000);
+    expect(logSpy).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
+  test("warns and uses the fallback for a malformed explicit browser duration", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const config = await buildBrowserConfig({
+      model: "gpt-5.5-pro",
+      browserTimeout: "1h!30m",
+    });
+
+    expect(config.timeoutMs).toBe(1_200_000);
+    expect(logSpy).toHaveBeenCalledWith(
+      'Warning: invalid --browser-timeout duration "1h!30m"; using fallback 1200000ms.',
+    );
+    logSpy.mockRestore();
+  });
+
+  test("warns and uses the zero fallback for a malformed browser-recheck-delay duration", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const config = await buildBrowserConfig({
+      model: "gpt-5.5-pro",
+      browserRecheckDelay: "zzz",
+    });
+
+    expect(config.assistantRecheckDelayMs).toBe(0);
+    expect(logSpy).toHaveBeenCalledWith(
+      'Warning: invalid --browser-recheck-delay duration "zzz"; using fallback 0ms.',
+    );
+    logSpy.mockRestore();
+  });
+
+  test("warns and uses the fallback for a malformed browser-auto-reattach-timeout duration", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const config = await buildBrowserConfig({
+      model: "gpt-5.5-pro",
+      browserAutoReattachTimeout: "zzz",
+    });
+
+    expect(config.autoReattachTimeoutMs).toBe(120_000);
+    expect(logSpy).toHaveBeenCalledWith(
+      'Warning: invalid --browser-auto-reattach-timeout duration "zzz"; using fallback 120000ms.',
+    );
+    logSpy.mockRestore();
+  });
+
+  test("warns independently for each malformed duration when several are supplied together", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const config = await buildBrowserConfig({
+      model: "gpt-5.5-pro",
+      browserInputTimeout: "zzz",
+      browserReuseWait: "zzz",
+      browserAutoReattachInterval: "zzz",
+    });
+
+    expect(config.inputTimeoutMs).toBe(60_000);
+    expect(config.reuseChromeWaitMs).toBe(0);
+    expect(config.autoReattachIntervalMs).toBe(0);
+    expect(logSpy).toHaveBeenCalledWith(
+      'Warning: invalid --browser-input-timeout duration "zzz"; using fallback 60000ms.',
+    );
+    expect(logSpy).toHaveBeenCalledWith(
+      'Warning: invalid --browser-reuse-wait duration "zzz"; using fallback 0ms.',
+    );
+    expect(logSpy).toHaveBeenCalledWith(
+      'Warning: invalid --browser-auto-reattach-interval duration "zzz"; using fallback 0ms.',
+    );
+    expect(logSpy).toHaveBeenCalledTimes(3);
+    logSpy.mockRestore();
   });
 
   test("prefers explicit browser model label when provided", async () => {

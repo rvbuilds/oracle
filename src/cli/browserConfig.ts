@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import chalk from "chalk";
 import type { BrowserSessionConfig } from "../sessionStore.js";
 import type { ModelName, ThinkingTimeLevel } from "../oracle/types.js";
 import { normalizeThinkingTimeLevel } from "../oracle/thinkingTime.js";
@@ -206,38 +207,62 @@ export async function buildBrowserConfig(
     url,
     debugPort: selectBrowserPort(options),
     timeoutMs: options.browserTimeout
-      ? parseDuration(options.browserTimeout, DEFAULT_BROWSER_TIMEOUT_MS)
+      ? parseBrowserDuration(
+          options.browserTimeout,
+          "--browser-timeout",
+          DEFAULT_BROWSER_TIMEOUT_MS,
+        )
       : undefined,
     inputTimeoutMs: options.browserInputTimeout
-      ? parseDuration(options.browserInputTimeout, DEFAULT_BROWSER_INPUT_TIMEOUT_MS)
+      ? parseBrowserDuration(
+          options.browserInputTimeout,
+          "--browser-input-timeout",
+          DEFAULT_BROWSER_INPUT_TIMEOUT_MS,
+        )
       : undefined,
     attachmentTimeoutMs: options.browserAttachmentTimeout
-      ? parseDuration(options.browserAttachmentTimeout, DEFAULT_BROWSER_ATTACHMENT_TIMEOUT_MS)
+      ? parseBrowserDuration(
+          options.browserAttachmentTimeout,
+          "--browser-attachment-timeout",
+          DEFAULT_BROWSER_ATTACHMENT_TIMEOUT_MS,
+        )
       : undefined,
     assistantRecheckDelayMs: options.browserRecheckDelay
-      ? parseDuration(options.browserRecheckDelay, 0)
+      ? parseBrowserDuration(options.browserRecheckDelay, "--browser-recheck-delay", 0)
       : undefined,
     assistantRecheckTimeoutMs: options.browserRecheckTimeout
-      ? parseDuration(options.browserRecheckTimeout, DEFAULT_BROWSER_RECHECK_TIMEOUT_MS)
+      ? parseBrowserDuration(
+          options.browserRecheckTimeout,
+          "--browser-recheck-timeout",
+          DEFAULT_BROWSER_RECHECK_TIMEOUT_MS,
+        )
       : undefined,
     reuseChromeWaitMs: options.browserReuseWait
-      ? parseDuration(options.browserReuseWait, 0)
+      ? parseBrowserDuration(options.browserReuseWait, "--browser-reuse-wait", 0)
       : undefined,
     profileLockTimeoutMs: options.browserProfileLockTimeout
-      ? parseDuration(options.browserProfileLockTimeout, 0)
+      ? parseBrowserDuration(options.browserProfileLockTimeout, "--browser-profile-lock-timeout", 0)
       : undefined,
     maxConcurrentTabs: parseMaxConcurrentTabs(options.browserMaxConcurrentTabs),
     autoReattachDelayMs: options.browserAutoReattachDelay
-      ? parseDuration(options.browserAutoReattachDelay, 0)
+      ? parseBrowserDuration(options.browserAutoReattachDelay, "--browser-auto-reattach-delay", 0)
       : undefined,
     autoReattachIntervalMs: options.browserAutoReattachInterval
-      ? parseDuration(options.browserAutoReattachInterval, 0)
+      ? parseBrowserDuration(
+          options.browserAutoReattachInterval,
+          "--browser-auto-reattach-interval",
+          0,
+        )
       : undefined,
     autoReattachTimeoutMs: options.browserAutoReattachTimeout
-      ? parseDuration(options.browserAutoReattachTimeout, DEFAULT_BROWSER_AUTO_REATTACH_TIMEOUT_MS)
+      ? parseBrowserDuration(
+          options.browserAutoReattachTimeout,
+          "--browser-auto-reattach-timeout",
+          DEFAULT_BROWSER_AUTO_REATTACH_TIMEOUT_MS,
+        )
       : undefined,
     cookieSyncWaitMs: options.browserCookieWait
-      ? parseDuration(options.browserCookieWait, 0)
+      ? parseBrowserDuration(options.browserCookieWait, "--browser-cookie-wait", 0)
       : undefined,
     cookieSync: options.browserNoCookieSync ? false : undefined,
     cookieNames,
@@ -313,6 +338,17 @@ function parseMaxConcurrentTabs(raw?: string): number | undefined {
     throw new Error(`Invalid browser max concurrent tabs: ${raw}. Expected a positive integer.`);
   }
   return Math.trunc(value);
+}
+
+function parseBrowserDuration(raw: string, optionName: string, fallbackMs: number): number {
+  const parsed = parseDuration(raw, Number.NaN);
+  if (Number.isFinite(parsed)) return parsed;
+  console.log(
+    chalk.yellow(
+      `Warning: invalid ${optionName} duration "${raw}"; using fallback ${fallbackMs}ms.`,
+    ),
+  );
+  return fallbackMs;
 }
 
 export function mapModelToBrowserLabel(model: ModelName): string {
