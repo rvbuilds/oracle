@@ -73,6 +73,21 @@ describe("shouldPreserveBrowserOnErrorForTest", () => {
   });
 });
 
+describe("authenticated model-selection errors", () => {
+  test("preserves picker diagnostics without adding cookie guidance", () => {
+    const error = new BrowserAutomationError(
+      'Unable to find model option matching "GPT-5.2 Instant". Available: GPT-5.6 Sol.',
+      { stage: "model-selection" },
+    );
+
+    const normalized = __test__.normalizeAuthenticatedModelSelectionError(error);
+
+    expect(normalized).toBe(error);
+    expect(normalized.message).toContain("Available: GPT-5.6 Sol");
+    expect(normalized.message).not.toMatch(/cookies|log in/i);
+  });
+});
+
 describe("browser run target cleanup", () => {
   test("never retains a copied profile after a preserved browser error", () => {
     expect(
