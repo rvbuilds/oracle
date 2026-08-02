@@ -2,6 +2,10 @@
 
 ## 0.16.2 — Unreleased
 
+### Added
+
+- API: add explicit GPT-5.6 reasoning mode and effort controls, including Pro mode, session persistence, long-run handling, and fail-closed route validation. Thanks @enki!
+
 ### Fixed
 
 - Browser: run long local Pro consultations in a detached worker while the CLI remains attached to its session log, so unexpected foreground termination cannot stop answer capture; Ctrl-C still cancels the worker. Thanks @Rokurolize!
@@ -12,10 +16,6 @@
 ### Changed
 
 - Dependencies: refresh Google GenAI, OpenAI, Clipboardy, Chrome DevTools protocol, Hono/MCP runtime security fixes, Oxc tooling, and TSX.
-
-### Added
-
-- API: add `--reasoning-mode standard|pro` and `--reasoning-effort none|low|medium|high|xhigh|max` for GPT-5.6 API runs, including session persistence, long-run detach/timeout behavior, and fail-closed validation for unsupported models and Chat Completions proxy routes. GPT-5.6 Pro remains a mode (`--model gpt-5.6-sol --reasoning-mode pro --reasoning-effort max`), not a separate model slug.
 
 ### Fixed
 
