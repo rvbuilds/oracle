@@ -1824,7 +1824,13 @@ export async function runBrowserMode(options: BrowserRunOptions): Promise<Browse
       if (conversationUrl && isConversationUrl(conversationUrl)) {
         logger(`[browser] Rechecking assistant response at ${conversationUrl}`);
         await raceWithDisconnect(Page.navigate({ url: conversationUrl }));
-        await raceWithDisconnect(delay(1000));
+        await raceWithDisconnect(
+          waitForResumedConversationHydration(Runtime, recheckTimeoutMs || 30_000, logger, {
+            requirePriorTurns: true,
+            requirePromptReady: false,
+            expectedConversationUrl: conversationUrl,
+          }),
+        );
       }
       // Validate session before attempting recheck - sessions can expire during the delay
       const sessionValid = await validateChatGPTSession(Runtime, logger);
@@ -3355,7 +3361,11 @@ async function runRemoteBrowserMode(
         lastUrl = conversationUrl;
         logger(`[browser] Rechecking assistant response at ${conversationUrl}`);
         await Page.navigate({ url: conversationUrl });
-        await delay(1000);
+        await waitForResumedConversationHydration(Runtime, recheckTimeoutMs || 30_000, logger, {
+          requirePriorTurns: true,
+          requirePromptReady: false,
+          expectedConversationUrl: conversationUrl,
+        });
       }
       // Validate session before attempting recheck - sessions can expire during the delay
       const sessionValid = await validateChatGPTSession(Runtime, logger);
@@ -3875,6 +3885,7 @@ export const __test__ = {
   shouldCleanupBlankTabsAfterLastLease,
   shouldCloseOwnedRunTargetAfterRun,
   shouldKeepLocalBrowserOpen,
+  waitForAssistantResponseWithReload,
 };
 export { syncCookies } from "./cookies.js";
 export {
@@ -3947,7 +3958,11 @@ async function waitForAssistantResponseWithReload(
     }
     logger("Assistant response stalled; reloading conversation and retrying once");
     await Page.navigate({ url: conversationUrl });
-    await delay(1000);
+    await waitForResumedConversationHydration(Runtime, timeoutMs, logger, {
+      requirePriorTurns: true,
+      requirePromptReady: false,
+      expectedConversationUrl: conversationUrl,
+    });
     return await waitForAssistantResponse(
       Runtime,
       timeoutMs,
