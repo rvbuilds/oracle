@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.16.2 — Unreleased
+## 0.17.0 — Unreleased
+
+### Added
+
+- API: add explicit GPT-5.6 reasoning mode and effort controls, including Pro mode, session persistence, long-run handling, and fail-closed route validation. Thanks @enki!
 
 ### Changed
 
