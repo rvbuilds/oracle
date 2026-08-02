@@ -468,6 +468,75 @@ describe("ChatGPT UI warning detection", () => {
     expect(__test__.isAssistantResponseTimeoutError(new Error("Response timeout"))).toBe(true);
     expect(__test__.isAssistantResponseTimeoutError(new Error("Navigation timeout"))).toBe(false);
   });
+
+  test("waits for prior turns to hydrate before retrying capture after a stall reload", async () => {
+    vi.useFakeTimers();
+    try {
+      let reloaded = false;
+      let hydrated = false;
+      const responseProbeHydrationStates: boolean[] = [];
+      const partial = { text: "Synthetic preamble.", messageId: "mid", turnId: "tid" };
+      const complete = {
+        text: "Synthetic complete answer after safe reload.",
+        messageId: "mid",
+        turnId: "tid",
+      };
+      const Runtime = {
+        evaluate: vi.fn(async (params: { expression?: string; awaitPromise?: boolean }) => {
+          const expression = String(params.expression ?? "");
+          if (expression === "location.href") {
+            return { result: { value: "https://chatgpt.com/c/synthetic-recovery" } };
+          }
+          if (expression.startsWith("document.querySelectorAll(")) {
+            return { result: { value: hydrated ? 2 : 0 } };
+          }
+          if (expression.includes("const selectors =")) {
+            return { result: { value: true } };
+          }
+          if (params.awaitPromise) {
+            responseProbeHydrationStates.push(hydrated);
+            if (!reloaded) {
+              return new Promise(() => undefined);
+            }
+            return { result: { type: "object", value: complete } };
+          }
+          if (expression.includes("extractAssistantTurn")) {
+            return { result: { value: reloaded ? complete : partial } };
+          }
+          if (expression.includes("Find the LAST assistant turn")) {
+            return { result: { value: reloaded } };
+          }
+          return { result: { value: false } };
+        }),
+        terminateExecution: vi.fn().mockResolvedValue(undefined),
+      };
+      const Page = {
+        navigate: vi.fn(async () => {
+          reloaded = true;
+          setTimeout(() => {
+            hydrated = true;
+          }, 250);
+          return {};
+        }),
+      };
+
+      const promise = __test__.waitForAssistantResponseWithReload(
+        Runtime as never,
+        Page as never,
+        3_000,
+        vi.fn() as never,
+        undefined,
+        "synthetic-recovery",
+      );
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      await expect(promise).resolves.toMatchObject({ text: complete.text });
+      expect(Page.navigate).toHaveBeenCalledOnce();
+      expect(responseProbeHydrationStates).toEqual([false, true]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("browser follow-ups", () => {
