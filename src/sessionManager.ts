@@ -2,6 +2,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { createWriteStream, mkdirSync } from "node:fs";
 import type { WriteStream } from "node:fs";
+import { randomUUID } from "node:crypto";
 import net from "node:net";
 import type {
   BrowserArchiveMode,
@@ -295,6 +296,7 @@ export interface SessionLifecycleMetadata {
   execution: "foreground" | "background";
   attached: boolean;
   detached: boolean;
+  workerPid?: number;
   reattachCommand: string;
 }
 
@@ -397,6 +399,23 @@ function sessionDir(id: string): string {
 
 function metaPath(id: string): string {
   return path.join(sessionDir(id), METADATA_FILENAME);
+}
+
+async function writeSessionMetadataFile(
+  sessionId: string,
+  metadata: SessionMetadata,
+): Promise<void> {
+  const targetPath = metaPath(sessionId);
+  const temporaryPath = `${targetPath}.${process.pid}.${randomUUID()}.tmp`;
+  try {
+    await fs.writeFile(temporaryPath, JSON.stringify(metadata, null, 2), {
+      encoding: "utf8",
+      mode: 0o600,
+    });
+    await fs.rename(temporaryPath, targetPath);
+  } finally {
+    await fs.rm(temporaryPath, { force: true }).catch(() => undefined);
+  }
 }
 
 function requestPath(id: string): string {
@@ -603,7 +622,7 @@ export async function initializeSession(
     },
   };
   await ensureDir(modelsDir(sessionId));
-  await fs.writeFile(metaPath(sessionId), JSON.stringify(metadata, null, 2), "utf8");
+  await writeSessionMetadataFile(sessionId, metadata);
   await Promise.all(
     (modelList.length > 0 ? modelList : [metadata.model ?? DEFAULT_MODEL]).map(
       async (modelName) => {
@@ -644,7 +663,7 @@ export async function updateSessionMetadata(
     (await readLegacySessionMetadata(sessionId, { reconcile: false, persist: false })) ??
     ({ id: sessionId } as SessionMetadata);
   const next = { ...existing, ...updates };
-  await fs.writeFile(metaPath(sessionId), JSON.stringify(next, null, 2), "utf8");
+  await writeSessionMetadataFile(sessionId, next);
   return next;
 }
 
@@ -695,8 +714,26 @@ async function reconcileSessionMetadata(
   meta: SessionMetadata,
   { persist }: { persist: boolean },
 ): Promise<SessionMetadata> {
-  const runtimeChecked = await markDeadBrowser(meta, { persist });
-  return await markZombie(runtimeChecked, { persist });
+  let current = meta;
+  const workerPid = current.lifecycle?.workerPid;
+  if (workerPid) {
+    if (isProcessAlive(workerPid)) {
+      return current;
+    }
+    current = (await readRawSessionMetadata(current.id)) ?? current;
+    if (current.status !== "running") {
+      return current;
+    }
+    if (current.lifecycle?.workerPid && isProcessAlive(current.lifecycle.workerPid)) {
+      return current;
+    }
+  }
+  const runtimeChecked = await markDeadBrowser(current);
+  const reconciled = await markZombie(runtimeChecked);
+  if (persist && reconciled !== current) {
+    await writeSessionMetadataFile(current.id, reconciled);
+  }
+  return reconciled;
 }
 
 function isSessionMetadataRecord(value: unknown): value is SessionMetadata {
@@ -905,10 +942,7 @@ export async function getSessionPaths(sessionId: string): Promise<{
   return { dir, metadata, log, request };
 }
 
-async function markZombie(
-  meta: SessionMetadata,
-  { persist }: { persist: boolean },
-): Promise<SessionMetadata> {
+async function markZombie(meta: SessionMetadata): Promise<SessionMetadata> {
   if (!(await isZombie(meta))) {
     return meta;
   }
@@ -935,16 +969,10 @@ async function markZombie(
     errorMessage: `Session marked as zombie (> ${formatElapsed(maxAgeMs)} stale)`,
     completedAt: new Date().toISOString(),
   };
-  if (persist) {
-    await fs.writeFile(metaPath(meta.id), JSON.stringify(updated, null, 2), "utf8");
-  }
   return updated;
 }
 
-async function markDeadBrowser(
-  meta: SessionMetadata,
-  { persist }: { persist: boolean },
-): Promise<SessionMetadata> {
+async function markDeadBrowser(meta: SessionMetadata): Promise<SessionMetadata> {
   if (meta.status !== "running" || meta.mode !== "browser") {
     return meta;
   }
@@ -977,9 +1005,6 @@ async function markDeadBrowser(
     completedAt: new Date().toISOString(),
     response,
   };
-  if (persist) {
-    await fs.writeFile(metaPath(meta.id), JSON.stringify(updated, null, 2), "utf8");
-  }
   return updated;
 }
 
