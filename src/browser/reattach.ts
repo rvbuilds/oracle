@@ -184,6 +184,7 @@ export async function resumeBrowserSession(
     );
     await waitForHydration(Runtime, timeoutMs, logger, {
       requirePriorTurns: true,
+      requirePromptReady: false,
       expectedConversationUrl: expectedConversationUrl ?? undefined,
     });
     const minTurnIndex =
@@ -362,6 +363,7 @@ async function resumeBrowserSessionViaNewChrome(
   const waitForHydration = deps.waitForConversationHydration ?? waitForResumedConversationHydration;
   await waitForHydration(Runtime, resolved.inputTimeoutMs, logger, {
     requirePriorTurns: true,
+    requirePromptReady: false,
     expectedConversationUrl: conversationUrl ?? undefined,
   });
   const waitForResponse = deps.waitForAssistantResponse ?? waitForAssistantResponse;

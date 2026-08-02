@@ -80,6 +80,7 @@ describe("resumeBrowserSession", () => {
     expect(captureAssistantMarkdown).toHaveBeenCalled();
     expect(waitForConversationHydration).toHaveBeenCalledWith(expect.anything(), 2000, logger, {
       requirePriorTurns: true,
+      requirePromptReady: false,
       expectedConversationUrl: runtime.tabUrl,
     });
     expect(waitForConversationHydration.mock.invocationCallOrder[0]).toBeLessThan(

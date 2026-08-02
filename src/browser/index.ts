@@ -1827,6 +1827,7 @@ export async function runBrowserMode(options: BrowserRunOptions): Promise<Browse
         await raceWithDisconnect(
           waitForResumedConversationHydration(Runtime, recheckTimeoutMs || 30_000, logger, {
             requirePriorTurns: true,
+            requirePromptReady: false,
             expectedConversationUrl: conversationUrl,
           }),
         );
@@ -3362,6 +3363,7 @@ async function runRemoteBrowserMode(
         await Page.navigate({ url: conversationUrl });
         await waitForResumedConversationHydration(Runtime, recheckTimeoutMs || 30_000, logger, {
           requirePriorTurns: true,
+          requirePromptReady: false,
           expectedConversationUrl: conversationUrl,
         });
       }
@@ -3958,6 +3960,7 @@ async function waitForAssistantResponseWithReload(
     await Page.navigate({ url: conversationUrl });
     await waitForResumedConversationHydration(Runtime, timeoutMs, logger, {
       requirePriorTurns: true,
+      requirePromptReady: false,
       expectedConversationUrl: conversationUrl,
     });
     return await waitForAssistantResponse(
