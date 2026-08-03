@@ -40,6 +40,24 @@ describe("buildBrowserConfig", () => {
     expect(config.desiredModel).toBe("GPT-5.5 Instant");
   });
 
+  test.each(["gpt-5.2", "gpt-5.2-instant", "gpt-5.2-thinking", "gpt-5.1"])(
+    "rejects retired browser model alias %s before launching Chrome",
+    async (model) => {
+      await expect(buildBrowserConfig({ model })).rejects.toThrow(
+        /ChatGPT no longer offers GPT-5\.2 base, Instant, or Thinking/,
+      );
+    },
+  );
+
+  test("keeps legacy Pro aliases and current-model selection available", async () => {
+    await expect(buildBrowserConfig({ model: "gpt-5.2-pro" })).resolves.toMatchObject({
+      desiredModel: "Pro",
+    });
+    await expect(
+      buildBrowserConfig({ model: "gpt-5.2", browserModelStrategy: "current" }),
+    ).resolves.toMatchObject({ modelStrategy: "current" });
+  });
+
   test("sets model strategy when provided", async () => {
     const config = await buildBrowserConfig({
       model: "gpt-5.2-pro",
@@ -129,7 +147,7 @@ describe("buildBrowserConfig", () => {
 
   test("honors overrides and converts durations + booleans", async () => {
     const config = await buildBrowserConfig({
-      model: "gpt-5.1",
+      model: "gpt-5.4",
       browserChromeProfile: "Profile 2",
       browserChromePath: "/Applications/Chrome.app",
       browserCookiePath: "/tmp/cookies.db",
@@ -162,7 +180,7 @@ describe("buildBrowserConfig", () => {
       headless: undefined,
       hideWindow: true,
       keepBrowser: true,
-      desiredModel: "GPT-5.2",
+      desiredModel: "Thinking 5.4",
       debug: true,
       allowCookieErrors: true,
     });
@@ -258,7 +276,7 @@ describe("buildBrowserConfig", () => {
   test("rejects invalid browser max concurrent tabs", async () => {
     await expect(
       buildBrowserConfig({
-        model: "gpt-5.1",
+        model: "gpt-5.4",
         browserMaxConcurrentTabs: "0",
       }),
     ).rejects.toThrow(/max concurrent tabs/i);
@@ -266,10 +284,10 @@ describe("buildBrowserConfig", () => {
 
   test("falls back to canonical label when override matches base model", async () => {
     const config = await buildBrowserConfig({
-      model: "gpt-5.1",
-      browserModelLabel: "gpt-5.1",
+      model: "gpt-5.4",
+      browserModelLabel: "gpt-5.4",
     });
-    expect(config.desiredModel).toBe("GPT-5.2");
+    expect(config.desiredModel).toBe("Thinking 5.4");
   });
 
   test("maps legacy Gemini Pro to current Pro label", async () => {
@@ -297,10 +315,10 @@ describe("buildBrowserConfig", () => {
 
   test("trims whitespace around override labels", async () => {
     const config = await buildBrowserConfig({
-      model: "gpt-5.1",
-      browserModelLabel: "  ChatGPT 5.1 Instant  ",
+      model: "gpt-5.4",
+      browserModelLabel: "  ChatGPT 5.4 Thinking  ",
     });
-    expect(config.desiredModel).toBe("GPT-5.2");
+    expect(config.desiredModel).toBe("Thinking 5.4");
   });
 
   test("parses remoteChrome host targets", async () => {
@@ -389,7 +407,7 @@ describe("buildBrowserConfig", () => {
 
   test("normalizes chatgpt-url alias and adds https when missing", async () => {
     const config = await buildBrowserConfig({
-      model: "gpt-5.1",
+      model: "gpt-5.4",
       chatgptUrl: "chatgpt.example.com/workspace",
     });
     expect(config.url).toBe("https://chatgpt.example.com/workspace");
@@ -398,7 +416,7 @@ describe("buildBrowserConfig", () => {
   test("rejects invalid chatgpt URL protocols", async () => {
     await expect(
       buildBrowserConfig({
-        model: "gpt-5.1",
+        model: "gpt-5.4",
         chatgptUrl: "ftp://chatgpt.example.com",
       }),
     ).rejects.toThrow(/http/i);
@@ -426,11 +444,11 @@ describe("buildBrowserConfig", () => {
 
   test("allows temporary chat URLs when not targeting Pro", async () => {
     const config = await buildBrowserConfig({
-      model: "gpt-5.2",
+      model: "gpt-5.4",
       chatgptUrl: "https://chatgpt.com/?temporary-chat=true",
     });
     expect(config.url).toBe("https://chatgpt.com/?temporary-chat=true");
-    expect(config.desiredModel).toBe("GPT-5.2");
+    expect(config.desiredModel).toBe("Thinking 5.4");
   });
 
   test("accepts IPv6 remoteChrome targets wrapped in brackets", async () => {
