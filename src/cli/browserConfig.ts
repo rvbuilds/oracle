@@ -165,6 +165,7 @@ export async function buildBrowserConfig(
     !isChatGptModel && normalizedOverride.length > 0 && normalizedOverride !== baseModel;
   const modelStrategy =
     normalizeBrowserModelStrategy(options.browserModelStrategy) ?? DEFAULT_MODEL_STRATEGY;
+  assertBrowserModelAvailable(options.model, modelStrategy);
   const cookieNames = parseCookieNames(
     options.browserCookieNames ?? process.env.ORACLE_BROWSER_COOKIE_NAMES,
   );
@@ -285,6 +286,21 @@ export async function buildBrowserConfig(
     researchMode: options.browserResearch === "deep" ? "deep" : "off",
     archiveConversations: options.browserArchive,
   };
+}
+
+function assertBrowserModelAvailable(model: ModelName, modelStrategy: BrowserModelStrategy): void {
+  if (modelStrategy !== "select") return;
+  const normalized = normalizeChatGptModelForBrowser(model);
+  if (
+    normalized !== "gpt-5.2" &&
+    normalized !== "gpt-5.2-instant" &&
+    normalized !== "gpt-5.2-thinking"
+  ) {
+    return;
+  }
+  throw new Error(
+    `Browser model "${model}" is retired because ChatGPT no longer offers GPT-5.2 base, Instant, or Thinking. Choose a current GPT-5.5/GPT-5.6 browser model, use --browser-model-strategy current to keep ChatGPT's active model, or use --engine api to retain the GPT-5.2 API alias.`,
+  );
 }
 
 function validateAttachRunningOptions(

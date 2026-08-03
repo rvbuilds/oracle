@@ -473,13 +473,13 @@ module.exports = () => ({
           "--prompt",
           "Engine browser route check",
           "--model",
-          "gpt-5.1",
+          "gpt-5.4",
         ],
         { env },
       );
 
       expect(stdout).toContain("[preview] Oracle");
-      expect(stdout).toContain("browser mode (target=GPT-5.2; requested=gpt-5.1)");
+      expect(stdout).toContain("browser mode (target=Thinking 5.4; requested=gpt-5.4)");
       expect(stdout).not.toContain("Provider: Azure OpenAI");
 
       await rm(oracleHome, { recursive: true, force: true });
@@ -520,13 +520,13 @@ module.exports = () => ({
           "--prompt",
           "Project browser route check",
           "--model",
-          "gpt-5.1",
+          "gpt-5.4",
         ],
         { env, cwd: repoDir },
       );
 
       expect(stdout).toContain("[preview] Oracle");
-      expect(stdout).toContain("browser mode (target=GPT-5.2; requested=gpt-5.1)");
+      expect(stdout).toContain("browser mode (target=Thinking 5.4; requested=gpt-5.4)");
       expect(stdout).not.toContain("Provider: Azure OpenAI");
 
       await rm(oracleHome, { recursive: true, force: true });
