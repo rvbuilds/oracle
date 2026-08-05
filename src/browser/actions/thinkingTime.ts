@@ -116,7 +116,7 @@ export async function ensureThinkingTime(
 /**
  * Best-effort selection of a thinking time level in ChatGPT's composer pill menu.
  * Safe by default: if the pill/menu/option isn't present, we continue without throwing.
- * @param level - The thinking time intensity: 'light', 'standard', 'extended', or 'heavy'
+ * @param level - The thinking time intensity: 'light', 'standard', 'extended', 'extra-high', or 'heavy'
  */
 export async function ensureThinkingTimeIfAvailable(
   Runtime: ChromeClient["Runtime"],
@@ -206,7 +206,8 @@ function buildThinkingTimeExpression(
       light: ['light', 'instant', '轻', '极速'],
       standard: ['standard', 'medium', '标准', '中'],
       extended: ['extended', 'high', '扩展', '深度', '加强', '高'],
-      heavy: ['heavy', 'extra high', '重度', '加重', '极高'],
+      'extra-high': ['extra high', '极高'],
+      heavy: ['heavy', '重度', '加重'],
     };
     const targetTokens = LEVEL_TOKENS[TARGET_LEVEL] || [TARGET_LEVEL];
 
@@ -488,10 +489,10 @@ function buildThinkingTimeExpression(
           return item;
         }
       }
-      if (TARGET_LEVEL === 'heavy') {
-        // Older Chinese layouts used bare 高 for the highest effort. Keep it
-        // only as a second-pass exact fallback so a current 高 row can never
-        // win before the primary 极高 row.
+      if (TARGET_LEVEL === 'extra-high') {
+        // Older Chinese layouts used bare 高 for the highest non-Pro effort.
+        // Keep it only as a second-pass exact fallback so a current 高 row can
+        // never win before the primary 极高 row.
         for (const item of items) {
           const itemText = normalize(item.textContent ?? '');
           const ariaLabel = normalize(item.getAttribute?.('aria-label') ?? '');
