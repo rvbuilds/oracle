@@ -92,7 +92,11 @@ export async function ensureThinkingTime(
       if (strictProEffort) {
         throw new Error(`${message}; refusing to submit without confirmed Pro Extended.`);
       }
-      logger(formatBrowserThinkingLog(`${message}; continuing with ChatGPT default.`));
+      // Nothing was clicked, so the tab keeps whatever effort it already had —
+      // which is not necessarily ChatGPT's default.
+      logger(
+        formatBrowserThinkingLog(`${message}; keeping the effort already selected in ChatGPT.`),
+      );
       return;
     }
     default: {

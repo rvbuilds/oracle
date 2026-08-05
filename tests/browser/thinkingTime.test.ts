@@ -332,7 +332,7 @@ describe("browser thinking-time selection expression", () => {
       ),
     ).resolves.toBeUndefined();
 
-    expect(logs.at(-1)).toContain("continuing with ChatGPT default");
+    expect(logs.at(-1)).toContain("keeping the effort already selected in ChatGPT");
   });
 
   it("drives ChatGPT's new Intelligence effort picker for Pro Extended", () => {
