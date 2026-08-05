@@ -1096,6 +1096,14 @@ describe("browser thinking-time selection expression", () => {
       { level: "extended", label: null, tiers: ["Sofort", "Mittel", "Sehr hoch"] },
       // ...nor may Hoch satisfy `extra-high` when Sehr hoch is absent.
       { level: "extra-high", label: null, tiers: ["Sofort", "Mittel", "Hoch"] },
+      // Row descriptions must not decide the tier: "sehr" inside Hoch's description
+      // may not disqualify it, and "Hochladen" may not stand in for Hoch.
+      {
+        level: "extended",
+        label: "Hoch – für sehr komplexe Aufgaben",
+        tiers: ["Sofort", "Mittel", "Hoch – für sehr komplexe Aufgaben", "Sehr hoch"],
+      },
+      { level: "extended", label: null, tiers: ["Sofort", "Mittel", "Hochladen"] },
     ];
 
     for (const testCase of cases) {

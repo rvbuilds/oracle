@@ -234,16 +234,31 @@ function buildThinkingTimeExpression(
       .replace(/\\s+/g, ' ')
       .trim();
     const hasToken = (text, token) => normalize(text).split(' ').includes(token);
-    const matchesLevel = (text) => {
+    // Whole-word/phrase containment. Latin effort labels are short words that also
+    // occur inside unrelated UI text ("Hochladen", "Ermitteln") and inside their own
+    // row descriptions ("Hoch – für sehr komplexe Aufgaben"), so plain substring
+    // matching misclassifies rows. CJK labels have no word separators, so they keep
+    // substring semantics.
+    const hasPhrase = (text, phrase) => {
+      const haystack = ' ' + normalize(text) + ' ';
+      const needle = normalize(phrase);
+      if (!needle) return false;
+      return /^[a-z0-9 ]+$/.test(needle)
+        ? haystack.includes(' ' + needle + ' ')
+        : haystack.includes(needle);
+    };
+    // ChatGPT's Pro effort tiers are "Pro Extended"/"Pro Erweitert" per UI language.
+    const hasExtendedWord = (text) => hasPhrase(text, 'extended') || hasPhrase(text, 'erweitert');
+    const matchesTokens = (text, tokens) => {
       const t = normalize(text);
       if (!t) return false;
-      return targetTokens.some((tok) => {
+      return tokens.some((tok) => {
         const token = normalize(tok);
         if (!token) return false;
-        if (token === 'high') return hasToken(t, 'high') && !hasToken(t, 'extra');
-        if (token === 'extra high') return hasToken(t, 'extra') && hasToken(t, 'high');
-        if (token === 'hoch') return hasToken(t, 'hoch') && !hasToken(t, 'sehr');
-        if (token === 'sehr hoch') return hasToken(t, 'sehr') && hasToken(t, 'hoch');
+        if (token === 'high') return hasPhrase(t, 'high') && !hasPhrase(t, 'extra high');
+        if (token === 'extra high') return hasPhrase(t, 'extra high');
+        if (token === 'hoch') return hasPhrase(t, 'hoch') && !hasPhrase(t, 'sehr hoch');
+        if (token === 'sehr hoch') return hasPhrase(t, 'sehr hoch');
         if (token === '极速') {
           const suffix = t.slice(token.length);
           return t === token || hasToken(t, token) || /^[0-9]/.test(suffix);
@@ -254,24 +269,9 @@ function buildThinkingTimeExpression(
         return t === token || hasToken(t, token) || t.includes(token);
       });
     };
-    const matchesAnyEffortLevel = (text) => {
-      const normalizedText = normalize(text);
-      if (!normalizedText) return false;
-      for (const tokens of Object.values(LEVEL_TOKENS)) {
-        for (const rawToken of tokens) {
-          const token = normalize(rawToken);
-          if (!token) continue;
-          if (token.includes(' ')) {
-            if (token.split(' ').every((part) => hasToken(normalizedText, part))) return true;
-          } else if (/^[a-z0-9]+$/.test(token)) {
-            if (hasToken(normalizedText, token)) return true;
-          } else if (normalizedText.includes(token)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    };
+    const matchesLevel = (text) => matchesTokens(text, targetTokens);
+    const matchesAnyEffortLevel = (text) =>
+      Object.values(LEVEL_TOKENS).some((tokens) => matchesTokens(text, tokens));
     const optionIsSelected = (node) => {
       if (!(node instanceof HTMLElement)) return false;
       const ariaChecked = node.getAttribute('aria-checked');
@@ -497,11 +497,15 @@ function buildThinkingTimeExpression(
       }
       return null;
     };
+    // Menu-shape heuristic only. This reads the whole menu's textContent, where
+    // adjacent row labels concatenate without a separator ("Pro StandardPro
+    // Extended"), so word-boundary matching does not apply here — substring is
+    // deliberate. Row-level classification uses matchesLevel/matchesTokens.
     const countEffortLevels = (menu) => {
       const text = normalize(menu?.textContent ?? '');
       let hits = 0;
       for (const tokens of Object.values(LEVEL_TOKENS)) {
-        if (tokens.some((token) => text.includes(String(token).toLowerCase()))) hits += 1;
+        if (tokens.some((token) => text.includes(normalize(token)))) hits += 1;
       }
       return hits;
     };
@@ -523,7 +527,11 @@ function buildThinkingTimeExpression(
     const isProEffortMenu = (menu) => {
       if (!isVisible(menu)) return false;
       const text = normalize(menu?.textContent ?? '');
-      return text.includes('pro standard') && text.includes('pro extended');
+      // Aggregate menu text, so plain substring only (see countEffortLevels).
+      return (
+        text.includes('pro standard') &&
+        (text.includes('pro extended') || text.includes('pro erweitert'))
+      );
     };
     const controlledMenu = (trigger) => {
       const id = trigger?.getAttribute?.('aria-controls');
@@ -558,10 +566,10 @@ function buildThinkingTimeExpression(
         (node?.textContent ?? '') + ' ' + (node?.getAttribute?.('aria-label') ?? ''),
       );
       if (TARGET_LEVEL === 'standard') {
-        return text.includes('pro') && text.includes('standard');
+        return hasPhrase(text, 'pro') && hasPhrase(text, 'standard');
       }
       if (TARGET_LEVEL === 'extended') {
-        return text.includes('pro') && text.includes('extended');
+        return hasPhrase(text, 'pro') && hasExtendedWord(text);
       }
       return false;
     };
@@ -586,10 +594,10 @@ function buildThinkingTimeExpression(
       }
       const label = normalize(button?.textContent ?? '');
       if (TARGET_LEVEL === 'standard') {
-        return hasToken(label, 'pro') && !hasToken(label, 'extended');
+        return hasToken(label, 'pro') && !hasExtendedWord(label);
       }
       if (TARGET_LEVEL === 'extended') {
-        return hasToken(label, 'pro') && hasToken(label, 'extended');
+        return hasToken(label, 'pro') && hasExtendedWord(label);
       }
       return false;
     };
@@ -925,7 +933,7 @@ function buildThinkingTimeExpression(
         const text = normalize(
           (node?.textContent ?? '') + ' ' + (node?.getAttribute?.('aria-label') ?? ''),
         );
-        return text.includes('pro') && text.includes('extended');
+        return hasPhrase(text, 'pro') && hasExtendedWord(text);
       };
       const findProExtendedOption = () => {
         const menu = document.querySelector(INTELLIGENCE_MENU_SELECTOR);
