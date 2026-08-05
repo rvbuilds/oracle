@@ -201,13 +201,13 @@ function buildThinkingTimeExpression(
     const TARGET_MODEL_KIND = ${targetModelKindLiteral};
     const TARGET_IS_GPT56_MODEL = ${targetIsGpt56ModelLiteral};
 
-    // Bilingual matchers: English level token + observed Chinese variants.
+    // Multilingual matchers: English level token + observed German/Chinese variants.
     const LEVEL_TOKENS = {
-      light: ['light', 'instant', '轻', '极速'],
-      standard: ['standard', 'medium', '标准', '中'],
-      extended: ['extended', 'high', '扩展', '深度', '加强', '高'],
-      'extra-high': ['extra high', '极高'],
-      heavy: ['heavy', '重度', '加重'],
+      light: ['light', 'instant', 'sofort', 'leicht', '轻', '极速'],
+      standard: ['standard', 'medium', 'mittel', '标准', '中'],
+      extended: ['extended', 'high', 'hoch', 'erweitert', '扩展', '深度', '加强', '高'],
+      'extra-high': ['extra high', 'sehr hoch', '极高'],
+      heavy: ['heavy', 'schwer', '重度', '加重'],
     };
     const targetTokens = LEVEL_TOKENS[TARGET_LEVEL] || [TARGET_LEVEL];
 
@@ -222,7 +222,14 @@ function buildThinkingTimeExpression(
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     // Keep CJK characters so we can match Chinese labels against LEVEL_TOKENS.
     const normalize = (value) => (value || '')
+      // Compose first so NFD umlauts fold too, then map them onto ASCII before
+      // the strip below would drop them (and split the token in half).
+      .normalize('NFC')
       .toLowerCase()
+      .replace(/ä/g, 'a')
+      .replace(/ö/g, 'o')
+      .replace(/ü/g, 'u')
+      .replace(/ß/g, 'ss')
       .replace(/[^a-z0-9\\u4e00-\\u9fa5]+/g, ' ')
       .replace(/\\s+/g, ' ')
       .trim();
@@ -235,6 +242,8 @@ function buildThinkingTimeExpression(
         if (!token) return false;
         if (token === 'high') return hasToken(t, 'high') && !hasToken(t, 'extra');
         if (token === 'extra high') return hasToken(t, 'extra') && hasToken(t, 'high');
+        if (token === 'hoch') return hasToken(t, 'hoch') && !hasToken(t, 'sehr');
+        if (token === 'sehr hoch') return hasToken(t, 'sehr') && hasToken(t, 'hoch');
         if (token === '极速') {
           const suffix = t.slice(token.length);
           return t === token || hasToken(t, token) || /^[0-9]/.test(suffix);
@@ -414,7 +423,8 @@ function buildThinkingTimeExpression(
         return true;
       }
       const label = menu?.querySelector?.('.__menu-label, [class*="menu-label"]');
-      return normalize(label?.textContent ?? '').includes('intelligence');
+      // 'intelligen' matches both "Intelligence" and German "Intelligenz".
+      return normalize(label?.textContent ?? '').includes('intelligen');
     };
     const failure = (status, extra = {}) => ({
       status,
@@ -457,24 +467,10 @@ function buildThinkingTimeExpression(
           return null;
         }
       }
-      if (
-        TARGET_IS_GPT56_MODEL &&
-        TARGET_LEVEL === 'heavy' &&
-        isIntelligenceEffortMenu(menu)
-      ) {
-        for (const item of items) {
-          const itemText = normalize(
-            (item.textContent ?? '') + ' ' + (item.getAttribute?.('aria-label') ?? ''),
-          );
-          if (
-            hasToken(itemText, 'pro') &&
-            !itemText.includes('gpt') &&
-            !/(?:^|\\s)5[ .-]?6(?:\\s|$)/.test(itemText)
-          ) {
-            return item;
-          }
-        }
-      }
+      // Generic effort-label match for every model/level. GPT-5.6 heavy used to
+      // short-circuit to the Pro row before reaching here; it no longer does, so
+      // a UI without a matching tier (e.g. German, which has no "heavy") falls
+      // through to null and the caller keeps the current selection.
       for (const item of items) {
         const itemText = normalize(
           (item.textContent ?? '') + ' ' + (item.getAttribute?.('aria-label') ?? ''),
@@ -516,9 +512,11 @@ function buildThinkingTimeExpression(
       const label = menu.querySelector?.('.__menu-label, [class*="menu-label"]');
       const labelText = normalize(label?.textContent ?? '');
       return (
-        labelText.includes('intelligence') ||
+        labelText.includes('intelligen') ||
         labelText.includes('thinking time') ||
         labelText.includes('thinking effort') ||
+        labelText.includes('denkdauer') ||
+        labelText.includes('denkzeit') ||
         countEffortLevels(menu) >= 2
       );
     };
@@ -601,13 +599,9 @@ function buildThinkingTimeExpression(
       const normalizedLabel = normalize(
         (button?.textContent ?? '') + ' ' + (button?.getAttribute?.('aria-label') ?? ''),
       );
-      if (
-        TARGET_IS_GPT56_MODEL &&
-        TARGET_LEVEL === 'heavy' &&
-        hasToken(normalizedLabel, 'pro')
-      ) {
-        return true;
-      }
+      // No 5.6-heavy "a Pro pill counts as heavy" shortcut here: that would also
+      // make post-click verification pass on an unchanged Pro pill. selectAndVerify
+      // handles the already-on-Pro case explicitly before any click.
       if ((modelKindOverride || TARGET_MODEL_KIND || modelKindFromNode(button)) === 'pro') {
         return false;
       }
@@ -620,14 +614,21 @@ function buildThinkingTimeExpression(
         modelKindFromNode(trigger) ||
         effectiveTargetModelKind();
       const option = findOption();
-      if (
-        !option &&
-        TARGET_IS_GPT56_MODEL &&
-        TARGET_LEVEL === 'heavy' &&
-        currentEffortPillMatchesTarget(trigger, triggerModelKind)
-      ) {
-        closeOpenMenus();
-        return { status: 'already-selected', label: trigger.textContent?.trim?.() || null };
+      if (!option && TARGET_IS_GPT56_MODEL && TARGET_LEVEL === 'heavy') {
+        // GPT-5.6 has no "heavy" tier: Pro is the closest thing. Accept a pill that
+        // is already on Pro as satisfying the request, but never click Pro to get
+        // there, and never let this stand in for post-click verification.
+        const pill = freshComposerTrigger(trigger) || findModelButton();
+        const pillLabel = normalize(
+          (pill?.textContent ?? '') + ' ' + (pill?.getAttribute?.('aria-label') ?? ''),
+        );
+        if (
+          hasToken(pillLabel, 'pro') ||
+          currentEffortPillMatchesTarget(trigger, triggerModelKind)
+        ) {
+          closeOpenMenus();
+          return { status: 'already-selected', label: trigger.textContent?.trim?.() || null };
+        }
       }
       if (!option) return failure('option-not-found', { modelKind: triggerModelKind });
       const label = option.textContent?.trim?.() || null;
