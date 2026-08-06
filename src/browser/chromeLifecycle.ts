@@ -742,6 +742,12 @@ function buildChromeFlags(
     "--disable-features=TranslateUI,AutomationControlled",
     "--mute-audio",
     "--window-size=1280,720",
+    // Chrome that *we* launch is pinned to English, so ChatGPT renders the labels
+    // our selectors were written against. This does not make English the only case
+    // to handle: --browser-attach-running and --remote-chrome never build these
+    // flags (see controlPlan.ts), so those runs inherit the user's own Chrome
+    // locale, and a ChatGPT account language setting can localize the UI even here.
+    // That is why the model/effort matchers must stay language-tolerant.
     "--lang=en-US",
     "--accept-lang=en-US,en",
   ];

@@ -8,7 +8,8 @@
 
 ### Fixed
 
-- Browser: keep `--browser-thinking-time extra-high` as Extra High (non-Pro) on GPT-5.6 Sol; reserve `heavy` for explicit Pro selection. Fixes #353.
+- Browser: keep `--browser-thinking-time extra-high` as Extra High (non-Pro) on GPT-5.6 Sol instead of selecting Pro. Fixes #353.
+- Browser: match German Intelligence effort labels with whole-word Latin matching, and keep the currently selected effort when a requested tier has no matching row. Thanks @Jonasdero!
 
 ## 0.17.0 — 2026-08-02
 

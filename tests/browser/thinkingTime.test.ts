@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { ThinkingTimeLevel } from "../../src/oracle/types.js";
 import {
   buildThinkingTimeExpressionForTest,
   ensureThinkingTime,
@@ -331,7 +332,7 @@ describe("browser thinking-time selection expression", () => {
       ),
     ).resolves.toBeUndefined();
 
-    expect(logs.at(-1)).toContain("continuing with ChatGPT default");
+    expect(logs.at(-1)).toContain("keeping the effort already selected in ChatGPT");
   });
 
   it("drives ChatGPT's new Intelligence effort picker for Pro Extended", () => {
@@ -611,7 +612,8 @@ describe("browser thinking-time selection expression", () => {
         FakeMouseEvent,
         FakeElement,
       ),
-    ).resolves.toEqual({ status: "switched", label: "Pro" });
+      // No heavy label in the menu: keep whatever is selected instead of switching to Pro.
+    ).resolves.toMatchObject({ status: "option-not-found" });
 
     const competingProAttributes: Record<string, string> = {
       role: "menuitemradio",
@@ -675,23 +677,18 @@ describe("browser thinking-time selection expression", () => {
         FakeMouseEvent,
         FakeElement,
       ),
-    ).resolves.toEqual({ status: "switched", label: "Pro" });
+      // Extra High is not a heavy label either, so Pro must not be hijacked.
+    ).resolves.toMatchObject({ status: "option-not-found" });
 
     const extraHighAttributes: Record<string, string> = {
       role: "menuitemradio",
       "aria-checked": "false",
       "data-state": "unchecked",
     };
-    const selectableExtraHigh = new FakeElement(
-      "Extra High",
-      extraHighAttributes,
-      [],
-      null,
-      () => {
-        extraHighAttributes["aria-checked"] = "true";
-        extraHighAttributes["data-state"] = "checked";
-      },
-    );
+    const selectableExtraHigh = new FakeElement("Extra High", extraHighAttributes, [], null, () => {
+      extraHighAttributes["aria-checked"] = "true";
+      extraHighAttributes["data-state"] = "checked";
+    });
     const extraHighItems = [
       selectableExtraHigh,
       new FakeElement("Pro", {
@@ -1025,6 +1022,185 @@ describe("browser thinking-time selection expression", () => {
       ).resolves.toEqual({ status: "switched", label: testCase.label });
       expect(clickedLabel).toBe(testCase.label);
       expect(unrelatedPillClicks).toBe(0);
+    }
+  });
+
+  it("selects German Intelligence tiers and keeps Hoch distinct from Sehr hoch", async () => {
+    class FakeEventTarget {
+      dispatchEvent(_event: unknown): boolean {
+        return true;
+      }
+    }
+    class FakeElement extends FakeEventTarget {
+      constructor(
+        public textContent: string,
+        private readonly attributes: Record<string, string> = {},
+        private readonly children: FakeElement[] = [],
+        private readonly nestedIntelligence: FakeElement | null = null,
+        private readonly onDispatch?: () => void,
+      ) {
+        super();
+      }
+      getAttribute(name: string): string | null {
+        return this.attributes[name] ?? null;
+      }
+      setAttribute(name: string, value: string): void {
+        this.attributes[name] = value;
+      }
+      querySelector(selector: string): FakeElement | null {
+        return selector.includes("composer-intelligence-picker-content")
+          ? this.nestedIntelligence
+          : null;
+      }
+      querySelectorAll(_selector: string): FakeElement[] {
+        return this.children;
+      }
+      closest(_selector: string): FakeElement | null {
+        return null;
+      }
+      matches(selector: string): boolean {
+        return (
+          selector.includes("__composer-pill") &&
+          this.attributes.class?.includes("__composer-pill") === true
+        );
+      }
+      focus(): void {}
+      getBoundingClientRect(): { width: number; height: number } {
+        return { width: 144, height: 36 };
+      }
+      override dispatchEvent(event: unknown): boolean {
+        this.onDispatch?.();
+        return super.dispatchEvent(event);
+      }
+    }
+    class FakeMouseEvent {
+      constructor(
+        public readonly type: string,
+        public readonly init?: unknown,
+      ) {}
+    }
+
+    const GERMAN_TIERS = ["Sofort", "Mittel", "Hoch", "Sehr hoch"];
+    const cases: Array<{ level: ThinkingTimeLevel; label: string | null; tiers: string[] }> = [
+      { level: "light", label: "Sofort", tiers: GERMAN_TIERS },
+      { level: "standard", label: "Mittel", tiers: GERMAN_TIERS },
+      { level: "extended", label: "Hoch", tiers: GERMAN_TIERS },
+      { level: "extra-high", label: "Sehr hoch", tiers: GERMAN_TIERS },
+      // Sehr hoch must never satisfy `extended`, even when it is the only high tier.
+      { level: "extended", label: null, tiers: ["Sofort", "Mittel", "Sehr hoch"] },
+      // ...nor may Hoch satisfy `extra-high` when Sehr hoch is absent.
+      { level: "extra-high", label: null, tiers: ["Sofort", "Mittel", "Hoch"] },
+      // Row descriptions must not decide the tier: "sehr" inside Hoch's description
+      // may not disqualify it, and "Hochladen" may not stand in for Hoch.
+      {
+        level: "extended",
+        label: "Hoch – für sehr komplexe Aufgaben",
+        tiers: ["Sofort", "Mittel", "Hoch – für sehr komplexe Aufgaben", "Sehr hoch"],
+      },
+      { level: "extended", label: null, tiers: ["Sofort", "Mittel", "Hochladen"] },
+      {
+        level: "standard",
+        label: "Mittel – ausgewogene Denkdauer",
+        tiers: ["Sofort", "Mittel – ausgewogene Denkdauer", "Hoch", "Sehr hoch"],
+      },
+      { level: "standard", label: null, tiers: ["Sofort", "Ermitteln", "Hoch"] },
+    ];
+
+    for (const testCase of cases) {
+      let clickedLabel: string | null = null;
+      const makeRadio = (label: string) => {
+        const radio = new FakeElement(
+          label,
+          { role: "menuitemradio", "aria-checked": "false", "data-state": "unchecked" },
+          [],
+          null,
+          () => {
+            clickedLabel = label;
+            radio.setAttribute("aria-checked", "true");
+            radio.setAttribute("data-state", "checked");
+          },
+        );
+        return radio;
+      };
+      const effortItems = [
+        ...testCase.tiers.map(makeRadio),
+        new FakeElement("Pro", {
+          role: "menuitemradio",
+          "aria-checked": "false",
+          "data-state": "unchecked",
+        }),
+        new FakeElement("GPT-5.6", { role: "menuitem", "aria-haspopup": "menu" }),
+      ];
+      const intelligenceGroup = new FakeElement(
+        `Intelligenz ${effortItems.map((item) => item.textContent).join(" ")}`,
+        { "data-testid": "composer-intelligence-picker-content", role: "group" },
+        effortItems,
+      );
+      const outerMenu = new FakeElement(
+        intelligenceGroup.textContent,
+        { role: "menu" },
+        effortItems,
+        intelligenceGroup,
+      );
+      const modelButton = new FakeElement("Hoch", {
+        class: "__composer-pill",
+        "aria-expanded": "true",
+        "aria-haspopup": "menu",
+      });
+      const documentStub = {
+        body: new FakeElement(""),
+        querySelector: (selector: string) => {
+          if (selector.includes("composer-intelligence-pro-thinking-effort-trigger")) return null;
+          if (selector.includes("composer-intelligence-picker-content")) return intelligenceGroup;
+          if (
+            selector.includes("model-switcher-dropdown-button") ||
+            selector.includes("__composer-pill")
+          ) {
+            return modelButton;
+          }
+          return null;
+        },
+        querySelectorAll: (selector: string) => {
+          if (selector.includes("__composer-pill")) return [modelButton];
+          if (selector.includes('role="menu"') || selector.includes("data-radix")) {
+            return [outerMenu];
+          }
+          return [];
+        },
+        dispatchEvent: () => true,
+      };
+      let now = 0;
+      const performanceStub = { now: () => (now += 100) };
+      const evaluate = new Function(
+        "document",
+        "performance",
+        "setTimeout",
+        "window",
+        "EventTarget",
+        "PointerEvent",
+        "MouseEvent",
+        "HTMLElement",
+        `return ${buildThinkingTimeExpressionForTest(testCase.level, "GPT-5.6")};`,
+      ) as (...args: unknown[]) => Promise<unknown>;
+
+      const result = (await evaluate(
+        documentStub,
+        performanceStub,
+        (callback: () => void) => callback(),
+        { PointerEvent: FakeMouseEvent, MouseEvent: FakeMouseEvent, Event: FakeMouseEvent },
+        FakeEventTarget,
+        FakeMouseEvent,
+        FakeMouseEvent,
+        FakeElement,
+      )) as { status: string; label?: string | null };
+      if (testCase.label === null) {
+        expect(result.status).toBe("option-not-found");
+        expect(clickedLabel).toBeNull();
+      } else {
+        expect(result.status).toBe("switched");
+        expect(result.label).toBe(testCase.label);
+        expect(clickedLabel).toBe(testCase.label);
+      }
     }
   });
 

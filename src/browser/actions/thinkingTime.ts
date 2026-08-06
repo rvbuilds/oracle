@@ -92,7 +92,11 @@ export async function ensureThinkingTime(
       if (strictProEffort) {
         throw new Error(`${message}; refusing to submit without confirmed Pro Extended.`);
       }
-      logger(formatBrowserThinkingLog(`${message}; continuing with ChatGPT default.`));
+      // Nothing was clicked, so the tab keeps whatever effort it already had —
+      // which is not necessarily ChatGPT's default.
+      logger(
+        formatBrowserThinkingLog(`${message}; keeping the effort already selected in ChatGPT.`),
+      );
       return;
     }
     default: {
@@ -201,13 +205,13 @@ function buildThinkingTimeExpression(
     const TARGET_MODEL_KIND = ${targetModelKindLiteral};
     const TARGET_IS_GPT56_MODEL = ${targetIsGpt56ModelLiteral};
 
-    // Bilingual matchers: English level token + observed Chinese variants.
+    // Multilingual matchers: English level token + observed German/Chinese variants.
     const LEVEL_TOKENS = {
-      light: ['light', 'instant', '轻', '极速'],
-      standard: ['standard', 'medium', '标准', '中'],
-      extended: ['extended', 'high', '扩展', '深度', '加强', '高'],
-      'extra-high': ['extra high', '极高'],
-      heavy: ['heavy', '重度', '加重'],
+      light: ['light', 'instant', 'sofort', 'leicht', '轻', '极速'],
+      standard: ['standard', 'medium', 'mittel', '标准', '中'],
+      extended: ['extended', 'high', 'hoch', 'erweitert', '扩展', '深度', '加强', '高'],
+      'extra-high': ['extra high', 'sehr hoch', '极高'],
+      heavy: ['heavy', 'schwer', '重度', '加重'],
     };
     const targetTokens = LEVEL_TOKENS[TARGET_LEVEL] || [TARGET_LEVEL];
 
@@ -222,19 +226,43 @@ function buildThinkingTimeExpression(
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     // Keep CJK characters so we can match Chinese labels against LEVEL_TOKENS.
     const normalize = (value) => (value || '')
+      // Compose first so NFD umlauts fold too, then map them onto ASCII before
+      // the strip below would drop them (and split the token in half).
+      .normalize('NFC')
       .toLowerCase()
+      .replace(/ä/g, 'a')
+      .replace(/ö/g, 'o')
+      .replace(/ü/g, 'u')
+      .replace(/ß/g, 'ss')
       .replace(/[^a-z0-9\\u4e00-\\u9fa5]+/g, ' ')
       .replace(/\\s+/g, ' ')
       .trim();
     const hasToken = (text, token) => normalize(text).split(' ').includes(token);
-    const matchesLevel = (text) => {
+    // Whole-word/phrase containment. Latin effort labels are short words that also
+    // occur inside unrelated UI text ("Hochladen", "Ermitteln") and inside their own
+    // row descriptions ("Hoch – für sehr komplexe Aufgaben"), so plain substring
+    // matching misclassifies rows. CJK labels have no word separators, so they keep
+    // substring semantics.
+    const hasPhrase = (text, phrase) => {
+      const haystack = ' ' + normalize(text) + ' ';
+      const needle = normalize(phrase);
+      if (!needle) return false;
+      return /^[a-z0-9 ]+$/.test(needle)
+        ? haystack.includes(' ' + needle + ' ')
+        : haystack.includes(needle);
+    };
+    // ChatGPT's Pro effort tiers are "Pro Extended"/"Pro Erweitert" per UI language.
+    const hasExtendedWord = (text) => hasPhrase(text, 'extended') || hasPhrase(text, 'erweitert');
+    const matchesTokens = (text, tokens) => {
       const t = normalize(text);
       if (!t) return false;
-      return targetTokens.some((tok) => {
+      return tokens.some((tok) => {
         const token = normalize(tok);
         if (!token) return false;
-        if (token === 'high') return hasToken(t, 'high') && !hasToken(t, 'extra');
-        if (token === 'extra high') return hasToken(t, 'extra') && hasToken(t, 'high');
+        if (token === 'high') return hasPhrase(t, 'high') && !hasPhrase(t, 'extra high');
+        if (token === 'extra high') return hasPhrase(t, 'extra high');
+        if (token === 'hoch') return hasPhrase(t, 'hoch') && !hasPhrase(t, 'sehr hoch');
+        if (token === 'sehr hoch') return hasPhrase(t, 'sehr hoch');
         if (token === '极速') {
           const suffix = t.slice(token.length);
           return t === token || hasToken(t, token) || /^[0-9]/.test(suffix);
@@ -242,27 +270,15 @@ function buildThinkingTimeExpression(
         if (['中', '高', '极高'].includes(token)) {
           return t === token || hasToken(t, token);
         }
+        if (/^[a-z0-9 ]+$/.test(token)) {
+          return hasPhrase(t, token);
+        }
         return t === token || hasToken(t, token) || t.includes(token);
       });
     };
-    const matchesAnyEffortLevel = (text) => {
-      const normalizedText = normalize(text);
-      if (!normalizedText) return false;
-      for (const tokens of Object.values(LEVEL_TOKENS)) {
-        for (const rawToken of tokens) {
-          const token = normalize(rawToken);
-          if (!token) continue;
-          if (token.includes(' ')) {
-            if (token.split(' ').every((part) => hasToken(normalizedText, part))) return true;
-          } else if (/^[a-z0-9]+$/.test(token)) {
-            if (hasToken(normalizedText, token)) return true;
-          } else if (normalizedText.includes(token)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    };
+    const matchesLevel = (text) => matchesTokens(text, targetTokens);
+    const matchesAnyEffortLevel = (text) =>
+      Object.values(LEVEL_TOKENS).some((tokens) => matchesTokens(text, tokens));
     const optionIsSelected = (node) => {
       if (!(node instanceof HTMLElement)) return false;
       const ariaChecked = node.getAttribute('aria-checked');
@@ -414,7 +430,8 @@ function buildThinkingTimeExpression(
         return true;
       }
       const label = menu?.querySelector?.('.__menu-label, [class*="menu-label"]');
-      return normalize(label?.textContent ?? '').includes('intelligence');
+      // 'intelligen' matches both "Intelligence" and German "Intelligenz".
+      return normalize(label?.textContent ?? '').includes('intelligen');
     };
     const failure = (status, extra = {}) => ({
       status,
@@ -457,24 +474,10 @@ function buildThinkingTimeExpression(
           return null;
         }
       }
-      if (
-        TARGET_IS_GPT56_MODEL &&
-        TARGET_LEVEL === 'heavy' &&
-        isIntelligenceEffortMenu(menu)
-      ) {
-        for (const item of items) {
-          const itemText = normalize(
-            (item.textContent ?? '') + ' ' + (item.getAttribute?.('aria-label') ?? ''),
-          );
-          if (
-            hasToken(itemText, 'pro') &&
-            !itemText.includes('gpt') &&
-            !/(?:^|\\s)5[ .-]?6(?:\\s|$)/.test(itemText)
-          ) {
-            return item;
-          }
-        }
-      }
+      // Generic effort-label match for every model/level. GPT-5.6 heavy used to
+      // short-circuit to the Pro row before reaching here; it no longer does, so
+      // a UI without a matching tier (e.g. German, which has no "heavy") falls
+      // through to null and the caller keeps the current selection.
       for (const item of items) {
         const itemText = normalize(
           (item.textContent ?? '') + ' ' + (item.getAttribute?.('aria-label') ?? ''),
@@ -501,11 +504,15 @@ function buildThinkingTimeExpression(
       }
       return null;
     };
+    // Menu-shape heuristic only. This reads the whole menu's textContent, where
+    // adjacent row labels concatenate without a separator ("Pro StandardPro
+    // Extended"), so word-boundary matching does not apply here — substring is
+    // deliberate. Row-level classification uses matchesLevel/matchesTokens.
     const countEffortLevels = (menu) => {
       const text = normalize(menu?.textContent ?? '');
       let hits = 0;
       for (const tokens of Object.values(LEVEL_TOKENS)) {
-        if (tokens.some((token) => text.includes(String(token).toLowerCase()))) hits += 1;
+        if (tokens.some((token) => text.includes(normalize(token)))) hits += 1;
       }
       return hits;
     };
@@ -516,16 +523,22 @@ function buildThinkingTimeExpression(
       const label = menu.querySelector?.('.__menu-label, [class*="menu-label"]');
       const labelText = normalize(label?.textContent ?? '');
       return (
-        labelText.includes('intelligence') ||
+        labelText.includes('intelligen') ||
         labelText.includes('thinking time') ||
         labelText.includes('thinking effort') ||
+        labelText.includes('denkdauer') ||
+        labelText.includes('denkzeit') ||
         countEffortLevels(menu) >= 2
       );
     };
     const isProEffortMenu = (menu) => {
       if (!isVisible(menu)) return false;
       const text = normalize(menu?.textContent ?? '');
-      return text.includes('pro standard') && text.includes('pro extended');
+      // Aggregate menu text, so plain substring only (see countEffortLevels).
+      return (
+        text.includes('pro standard') &&
+        (text.includes('pro extended') || text.includes('pro erweitert'))
+      );
     };
     const controlledMenu = (trigger) => {
       const id = trigger?.getAttribute?.('aria-controls');
@@ -560,10 +573,10 @@ function buildThinkingTimeExpression(
         (node?.textContent ?? '') + ' ' + (node?.getAttribute?.('aria-label') ?? ''),
       );
       if (TARGET_LEVEL === 'standard') {
-        return text.includes('pro') && text.includes('standard');
+        return hasPhrase(text, 'pro') && hasPhrase(text, 'standard');
       }
       if (TARGET_LEVEL === 'extended') {
-        return text.includes('pro') && text.includes('extended');
+        return hasPhrase(text, 'pro') && hasExtendedWord(text);
       }
       return false;
     };
@@ -588,10 +601,10 @@ function buildThinkingTimeExpression(
       }
       const label = normalize(button?.textContent ?? '');
       if (TARGET_LEVEL === 'standard') {
-        return hasToken(label, 'pro') && !hasToken(label, 'extended');
+        return hasToken(label, 'pro') && !hasExtendedWord(label);
       }
       if (TARGET_LEVEL === 'extended') {
-        return hasToken(label, 'pro') && hasToken(label, 'extended');
+        return hasToken(label, 'pro') && hasExtendedWord(label);
       }
       return false;
     };
@@ -601,13 +614,9 @@ function buildThinkingTimeExpression(
       const normalizedLabel = normalize(
         (button?.textContent ?? '') + ' ' + (button?.getAttribute?.('aria-label') ?? ''),
       );
-      if (
-        TARGET_IS_GPT56_MODEL &&
-        TARGET_LEVEL === 'heavy' &&
-        hasToken(normalizedLabel, 'pro')
-      ) {
-        return true;
-      }
+      // No 5.6-heavy "a Pro pill counts as heavy" shortcut here: that would also
+      // make post-click verification pass on an unchanged Pro pill. selectAndVerify
+      // handles the already-on-Pro case explicitly before any click.
       if ((modelKindOverride || TARGET_MODEL_KIND || modelKindFromNode(button)) === 'pro') {
         return false;
       }
@@ -620,14 +629,21 @@ function buildThinkingTimeExpression(
         modelKindFromNode(trigger) ||
         effectiveTargetModelKind();
       const option = findOption();
-      if (
-        !option &&
-        TARGET_IS_GPT56_MODEL &&
-        TARGET_LEVEL === 'heavy' &&
-        currentEffortPillMatchesTarget(trigger, triggerModelKind)
-      ) {
-        closeOpenMenus();
-        return { status: 'already-selected', label: trigger.textContent?.trim?.() || null };
+      if (!option && TARGET_IS_GPT56_MODEL && TARGET_LEVEL === 'heavy') {
+        // GPT-5.6 has no "heavy" tier: Pro is the closest thing. Accept a pill that
+        // is already on Pro as satisfying the request, but never click Pro to get
+        // there, and never let this stand in for post-click verification.
+        const pill = freshComposerTrigger(trigger) || findModelButton();
+        const pillLabel = normalize(
+          (pill?.textContent ?? '') + ' ' + (pill?.getAttribute?.('aria-label') ?? ''),
+        );
+        if (
+          hasToken(pillLabel, 'pro') ||
+          currentEffortPillMatchesTarget(trigger, triggerModelKind)
+        ) {
+          closeOpenMenus();
+          return { status: 'already-selected', label: trigger.textContent?.trim?.() || null };
+        }
       }
       if (!option) return failure('option-not-found', { modelKind: triggerModelKind });
       const label = option.textContent?.trim?.() || null;
@@ -924,7 +940,7 @@ function buildThinkingTimeExpression(
         const text = normalize(
           (node?.textContent ?? '') + ' ' + (node?.getAttribute?.('aria-label') ?? ''),
         );
-        return text.includes('pro') && text.includes('extended');
+        return hasPhrase(text, 'pro') && hasExtendedWord(text);
       };
       const findProExtendedOption = () => {
         const menu = document.querySelector(INTELLIGENCE_MENU_SELECTOR);
