@@ -270,6 +270,9 @@ function buildThinkingTimeExpression(
         if (['中', '高', '极高'].includes(token)) {
           return t === token || hasToken(t, token);
         }
+        if (/^[a-z0-9 ]+$/.test(token)) {
+          return hasPhrase(t, token);
+        }
         return t === token || hasToken(t, token) || t.includes(token);
       });
     };

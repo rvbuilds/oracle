@@ -685,16 +685,10 @@ describe("browser thinking-time selection expression", () => {
       "aria-checked": "false",
       "data-state": "unchecked",
     };
-    const selectableExtraHigh = new FakeElement(
-      "Extra High",
-      extraHighAttributes,
-      [],
-      null,
-      () => {
-        extraHighAttributes["aria-checked"] = "true";
-        extraHighAttributes["data-state"] = "checked";
-      },
-    );
+    const selectableExtraHigh = new FakeElement("Extra High", extraHighAttributes, [], null, () => {
+      extraHighAttributes["aria-checked"] = "true";
+      extraHighAttributes["data-state"] = "checked";
+    });
     const extraHighItems = [
       selectableExtraHigh,
       new FakeElement("Pro", {
@@ -1104,6 +1098,12 @@ describe("browser thinking-time selection expression", () => {
         tiers: ["Sofort", "Mittel", "Hoch – für sehr komplexe Aufgaben", "Sehr hoch"],
       },
       { level: "extended", label: null, tiers: ["Sofort", "Mittel", "Hochladen"] },
+      {
+        level: "standard",
+        label: "Mittel – ausgewogene Denkdauer",
+        tiers: ["Sofort", "Mittel – ausgewogene Denkdauer", "Hoch", "Sehr hoch"],
+      },
+      { level: "standard", label: null, tiers: ["Sofort", "Ermitteln", "Hoch"] },
     ];
 
     for (const testCase of cases) {
