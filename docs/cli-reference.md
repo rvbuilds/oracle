@@ -85,7 +85,7 @@ See [OpenAI / Azure / OpenRouter](openai-endpoints.md) and [OpenRouter](openrout
 | `--browser-manual-login`                                                       | Use persistent profile + manual login (no Keychain).         |
 | `--browser-attach-running`                                                     | Attach to your already-running Chrome via DevTools.          |
 | `--browser-tab <ref>`                                                          | Reuse an existing tab (`current`, id, URL, title substring). |
-| `--browser-thinking-time <light\|standard\|extended\|extra-high\|heavy>`     | Effort intensity (`extra-high` = Extra High; `heavy` = Pro). |
+| `--browser-thinking-time <light\|standard\|extended\|extra-high\|heavy>`       | Effort intensity; unmatched tiers keep the current effort.   |
 | `--browser-research deep`                                                      | Activate Deep Research mode.                                 |
 | `--browser-follow-up <prompt>`                                                 | Multi-turn in the same ChatGPT conversation.                 |
 | `--browser-port <port>`                                                        | Pin Chrome DevTools port.                                    |
