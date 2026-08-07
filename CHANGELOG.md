@@ -2,6 +2,10 @@
 
 ## 0.17.2 — Unreleased
 
+### Changed
+
+- Developer workflow: remove the obsolete scoped-commit helper and allow standard Git commands in isolated worktrees.
+
 ## 0.17.1 — 2026-08-02
 
 ### Changed
