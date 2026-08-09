@@ -1,5 +1,5 @@
 overrides:
-  devtools-protocol: 0.0.1673900
+  devtools-protocol: 0.0.1676105
   hono: 4.13.0
   "@hono/node-server": 2.1.0
   fast-uri: 4.1.2
