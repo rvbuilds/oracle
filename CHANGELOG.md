@@ -8,6 +8,7 @@
 
 ### Changed
 
+- Dependencies: update Google GenAI, Node types, Chrome DevTools protocol, esbuild, tsx, and related transitive packages.
 - Developer workflow: remove the obsolete scoped-commit helper and allow standard Git commands in isolated worktrees.
 
 ### Fixed
