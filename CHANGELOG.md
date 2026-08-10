@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.17.3 — Unreleased
+
 ## 0.17.2 — 2026-08-10
 
 **Highlight:** browser mode works with ChatGPT's redesigned model picker again —
