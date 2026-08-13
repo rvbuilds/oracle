@@ -1,13 +1,16 @@
 # Changelog
 
-## 0.17.3 — Unreleased
+## 0.17.3 — 2026-08-13
+
+**Highlight:** browser-mode answers and recovery are reliable again — no more
+discarded responses, and authenticated sessions survive a reattach.
 
 ### Fixed
 
-- Browser: recognize the Japanese `詳細設定` → `推論レベル` controls in ChatGPT's unified Intelligence picker, allowing explicit Pro effort selection without weakening the fail-closed guard for unknown languages.
-- Browser: honor explicit `--browser-headless` for locally launched Chrome/Chromium binaries while preserving the headful default. Explicit `--browser-headless` still conflicts with `--browser-attach-running`; a saved `browser.headless` preference is ignored in attach-running mode.
 - Browser: treat the skip-ahead control labels as placeholder signals only when the entire turn text is short chrome text, so substantial assistant answers that mention those labels are no longer discarded.
-- Browser: align reattach recovery cookie sync with the launch path for manual-login profiles with explicit cookie sync, so recovery can reopen an authenticated conversation with supplied cookies instead of skipping sync.
+- Browser: align reattach recovery cookie sync with the launch path for manual-login profiles with explicit cookie sync, so recovery can reopen an authenticated conversation with supplied cookies instead of skipping sync. Thanks @enieuwy!
+- Browser: recognize the Japanese `詳細設定` → `推論レベル` controls in ChatGPT's unified Intelligence picker, allowing explicit Pro effort selection without weakening the fail-closed guard for unknown languages. Thanks @kiyo-e!
+- Browser: honor explicit `--browser-headless` for locally launched Chrome/Chromium binaries while preserving the headful default. Explicit `--browser-headless` still conflicts with `--browser-attach-running`; a saved `browser.headless` preference is ignored in attach-running mode. Thanks @enieuwy!
 
 ## 0.17.2 — 2026-08-10
 
