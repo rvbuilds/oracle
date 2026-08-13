@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.17.4 — Unreleased
+
 ## 0.17.3 — 2026-08-13
 
 **Highlight:** browser-mode answers and recovery are reliable again — no more
