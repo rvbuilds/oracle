@@ -24,6 +24,17 @@ describe("buildBrowserConfig", () => {
     });
   });
 
+  test("forwards configured manual-login cookie sync to browser sessions", async () => {
+    const config = await buildBrowserConfig({
+      model: "gpt-5.5-pro",
+      browserManualLogin: true,
+      browserManualLoginCookieSync: true,
+    });
+
+    expect(config.manualLoginCookieSync).toBe(true);
+    expect(config.cookieSync).toBe(true);
+  });
+
   test("honors explicit headless while keeping explicit false headful", async () => {
     await expect(
       buildBrowserConfig({ model: "gpt-5.5-pro", browserHeadless: true }),

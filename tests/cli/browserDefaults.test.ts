@@ -222,6 +222,7 @@ describe("applyBrowserDefaultsFromConfig", () => {
       browser: {
         manualLogin: true,
         manualLoginProfileDir: "/tmp/oracle-profile",
+        manualLoginCookieSync: true,
       },
     };
 
@@ -229,6 +230,7 @@ describe("applyBrowserDefaultsFromConfig", () => {
 
     expect(options.browserManualLogin).toBe(true);
     expect(options.browserManualLoginProfileDir).toBe("/tmp/oracle-profile");
+    expect(options.browserManualLoginCookieSync).toBe(true);
   });
 
   test("applies attach-running defaults from config when CLI flags are untouched", () => {
@@ -254,6 +256,7 @@ describe("applyBrowserDefaultsFromConfig", () => {
         debugPort: 9222,
         timeoutMs: 120_000,
         headless: true,
+        manualLoginCookieSync: true,
         hideWindow: true,
         keepBrowser: true,
         manualLogin: true,
@@ -271,6 +274,7 @@ describe("applyBrowserDefaultsFromConfig", () => {
     expect(options.browserCookiePath).toBeUndefined();
     expect(options.browserPort).toBeUndefined();
     expect(options.browserHeadless).toBeUndefined();
+    expect(options.browserManualLoginCookieSync).toBeUndefined();
     expect(options.browserHideWindow).toBeUndefined();
     expect(options.browserKeepBrowser).toBeUndefined();
     expect(options.browserManualLogin).toBeUndefined();
