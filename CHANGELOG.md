@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.17.4 — Unreleased
+## 0.18.0 — 2026-08-14
 
 ### Changed
 
@@ -10,7 +10,6 @@
 ### Fixed
 
 - Browser: detect a disabled ChatGPT effort tier (e.g. an exhausted Pro allotment) before clicking it, and report the account's own reset notice instead of a misleading "selection unverified" failure. Thanks @enieuwy!
-
 ## 0.17.3 — 2026-08-13
 
 **Highlight:** browser-mode answers and recovery are reliable again — no more
