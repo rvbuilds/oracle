@@ -5,6 +5,7 @@
 ### Fixed
 
 - Browser: restore locally launched macOS Chrome windows to their prior placement for visible runs only when Oracle recorded the window before a `--browser-hide-window` run; unmarked windows remain untouched.
+- Browser: archive completed ChatGPT conversations when the interface is Japanese by recognizing the current `その他`, `アーカイブ`, and `アーカイブを解除する` controls.
 - Browser: apply the configured input timeout to prompt preparation so stalled local file assembly fails clearly before launching Chrome. Fixes #381.
 - Browser: report ChatGPT's rate limit as a rate limit. When ChatGPT covers the page with its "Too many requests — we've temporarily limited access to your conversations" modal, the model-switcher scrape walked it like any other menu and reported its "Got it" button as an available model, so a throttled run failed with `Unable to find model option matching "…". Available: Got it` — a message that sends the reader after a model-naming bug when the correct response is to wait a few minutes. Model selection now probes for the notice first and raises a `chatgpt-throttled` error carrying `retryable: true` and the notice text; without a notice the original diagnosis is unchanged.
 
