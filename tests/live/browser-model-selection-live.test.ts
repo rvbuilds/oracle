@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { runBrowserMode } from "../../src/browser/index.js";
 import type { BrowserLogger } from "../../src/browser/types.js";
-import { getCookies } from "@steipete/sweet-cookie";
+import { getCookies } from "@rvbuilds/sweet-cookie";
 import { acquireLiveTestLock, releaseLiveTestLock } from "./liveLock.js";
 
 const LIVE = process.env.ORACLE_LIVE_TEST === "1";

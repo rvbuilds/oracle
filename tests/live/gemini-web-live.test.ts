@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { createGeminiWebExecutor } from "../../src/gemini-web/executor.js";
-import { getCookies } from "@steipete/sweet-cookie";
+import { getCookies } from "@rvbuilds/sweet-cookie";
 
 const live = process.env.ORACLE_LIVE_TEST === "1";
 

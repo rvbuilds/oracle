@@ -66,6 +66,6 @@ Browser engine handles ChatGPT (GPT-\* models) and Gemini (Gemini-\*); everythin
 
 ## Source of truth
 
-- Recent changes: [CHANGELOG.md](https://github.com/steipete/oracle/blob/main/CHANGELOG.md).
-- Open issues / direction: [GitHub Issues](https://github.com/steipete/oracle/issues).
+- Recent changes: [CHANGELOG.md](https://github.com/rvbuilds/oracle/blob/main/CHANGELOG.md).
+- Open issues / direction: [GitHub Issues](https://github.com/rvbuilds/oracle/issues).
 - Release process: [Releasing](RELEASING.md).

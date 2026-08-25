@@ -79,7 +79,7 @@ The MCP response includes `structuredContent.images[]` with the saved file path,
 ## Launching & usage
 
 - Installed from npm:
-  - One-off: `npx @steipete/oracle oracle-mcp`
+  - One-off: `npx @rvbuilds/oracle oracle-mcp`
   - Global: `oracle-mcp`
 - From the repo (contributors):
   - `pnpm build`
@@ -90,14 +90,14 @@ The MCP response includes `structuredContent.images[]` with the saved file path,
     "name": "oracle",
     "type": "stdio",
     "command": "npx",
-    "args": ["@steipete/oracle", "oracle-mcp"]
+    "args": ["@rvbuilds/oracle", "oracle-mcp"]
   }
   ```
 - Project-scoped Claude (.mcp.json) example:
   ```json
   {
     "mcpServers": {
-      "oracle": { "type": "stdio", "command": "npx", "args": ["@steipete/oracle", "oracle-mcp"] }
+      "oracle": { "type": "stdio", "command": "npx", "args": ["@rvbuilds/oracle", "oracle-mcp"] }
     }
   }
   ```

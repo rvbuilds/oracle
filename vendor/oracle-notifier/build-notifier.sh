@@ -9,7 +9,7 @@ MACOS="$CONTENTS/MacOS"
 RESOURCES="$CONTENTS/Resources"
 ICONSET=OracleIcon.iconset
 ICNS=OracleIcon.icns
-IDENTITY="${CODESIGN_ID:-Developer ID Application: Peter Steinberger (Y5PE65HELJ)}"
+IDENTITY="${CODESIGN_ID:-Developer ID Application: Rudra Varma (Y5PE65HELJ)}"
 ZIP="/tmp/OracleNotifierNotarize.zip"
 
 NOTARY_KEY_P8="${APP_STORE_CONNECT_API_KEY_P8:-}"
@@ -42,7 +42,7 @@ cat > "$CONTENTS/Info.plist" <<'PLIST'
 <plist version="1.0">
 <dict>
   <key>CFBundleIdentifier</key>
-  <string>com.steipete.oracle.notifier</string>
+  <string>com.rvbuilds.oracle.notifier</string>
   <key>CFBundleName</key>
   <string>OracleNotifier</string>
   <key>CFBundleDisplayName</key>

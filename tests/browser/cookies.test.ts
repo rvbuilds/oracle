@@ -7,7 +7,7 @@ import {
 import type { ChromeClient } from "../../src/browser/types.js";
 
 const getCookies = vi.hoisted(() => vi.fn());
-vi.mock("@steipete/sweet-cookie", () => ({ getCookies }));
+vi.mock("@rvbuilds/sweet-cookie", () => ({ getCookies }));
 
 const logger = vi.fn();
 

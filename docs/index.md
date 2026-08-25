@@ -6,7 +6,7 @@ description: "Oracle bundles your prompt and files so a mythical pro agent — G
 
 ## Try it
 
-After installing (`brew install steipete/tap/oracle` or `npm i -g @steipete/oracle`), every consult is a one-liner.
+After installing (`brew install rvbuilds/tap/oracle` or `npm i -g @rvbuilds/oracle`), every consult is a one-liner.
 
 ```bash
 # Browser path — no API key, drives ChatGPT directly (default: GPT-5.5 Pro).
@@ -54,4 +54,4 @@ The frontier models marked "Pro" — GPT-5.5 Pro, Gemini 3.1 Pro, Claude Opus, O
 
 ## Project
 
-Active development under MIT. The [changelog](https://github.com/steipete/oracle/blob/main/CHANGELOG.md) tracks recent releases. Source on [GitHub](https://github.com/steipete/oracle). Not affiliated with OpenAI, Google, or Anthropic.
+Active development under MIT. The [changelog](https://github.com/rvbuilds/oracle/blob/main/CHANGELOG.md) tracks recent releases. Source on [GitHub](https://github.com/rvbuilds/oracle). Not affiliated with OpenAI, Google, or Anthropic.

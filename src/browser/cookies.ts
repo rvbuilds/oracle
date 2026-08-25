@@ -1,7 +1,7 @@
 import { COOKIE_URLS } from "./constants.js";
 import type { BrowserLogger, ChromeClient, CookieParam } from "./types.js";
 import { delay } from "./utils.js";
-import { getCookies, type Cookie } from "@steipete/sweet-cookie";
+import { getCookies, type Cookie } from "@rvbuilds/sweet-cookie";
 
 export class ChromeCookieSyncError extends Error {}
 

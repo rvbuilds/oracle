@@ -38,11 +38,11 @@ jobs:
           set -euo pipefail
           test -n "$GH_TOKEN"
           gh workflow run update-formula.yml \
-            --repo steipete/homebrew-tap \
+            --repo rvbuilds/homebrew-tap \
             -f formula=oracle \
             -f tag="${{ steps.release.outputs.tag }}" \
-            -f repository=steipete/oracle \
-            -f artifact_url='https://github.com/steipete/oracle/releases/download/{tag}/oracle-{version}.tgz' \
+            -f repository=rvbuilds/oracle \
+            -f artifact_url='https://github.com/rvbuilds/oracle/releases/download/{tag}/oracle-{version}.tgz' \
             -f request_id="${{ steps.release.outputs.request_id }}"
 
       - name: Wait for tap update
@@ -52,9 +52,9 @@ jobs:
         run: |
           set -euo pipefail
           for _ in {1..20}; do
-            run_id="$(gh run list --repo steipete/homebrew-tap --workflow update-formula.yml --json databaseId,displayTitle --jq '.[] | select(.displayTitle | contains("${{ steps.release.outputs.request_id }}")) | .databaseId' | head -n1)"
+            run_id="$(gh run list --repo rvbuilds/homebrew-tap --workflow update-formula.yml --json databaseId,displayTitle --jq '.[] | select(.displayTitle | contains("${{ steps.release.outputs.request_id }}")) | .databaseId' | head -n1)"
             if [[ -n "$run_id" ]]; then
-              gh run watch "$run_id" --repo steipete/homebrew-tap --exit-status
+              gh run watch "$run_id" --repo rvbuilds/homebrew-tap --exit-status
               exit 0
             fi
             sleep 5

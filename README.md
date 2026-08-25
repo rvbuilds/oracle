@@ -5,11 +5,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/steipete/oracle/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/steipete/oracle/ci.yml?branch=main&style=flat-square&label=ci" alt="CI status"></a>
-  <a href="https://www.npmjs.com/package/@steipete/oracle"><img src="https://img.shields.io/npm/v/@steipete/oracle?style=flat-square" alt="npm version"></a>
-  <a href="https://nodejs.org/"><img src="https://img.shields.io/node/v/@steipete/oracle?style=flat-square" alt="Node.js version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/steipete/oracle?style=flat-square" alt="License"></a>
-  <a href="https://github.com/steipete/homebrew-tap/blob/main/Formula/oracle.rb"><img src="https://img.shields.io/badge/homebrew-steipete%2Ftap-orange?style=flat-square" alt="Homebrew tap"></a>
+  <a href="https://github.com/rvbuilds/oracle/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/rvbuilds/oracle/ci.yml?branch=main&style=flat-square&label=ci" alt="CI status"></a>
+  <a href="https://www.npmjs.com/package/@rvbuilds/oracle"><img src="https://img.shields.io/npm/v/@rvbuilds/oracle?style=flat-square" alt="npm version"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/node/v/@rvbuilds/oracle?style=flat-square" alt="Node.js version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/rvbuilds/oracle?style=flat-square" alt="License"></a>
+  <a href="https://github.com/rvbuilds/homebrew-tap/blob/main/Formula/oracle.rb"><img src="https://img.shields.io/badge/homebrew-rvbuilds%2Ftap-orange?style=flat-square" alt="Homebrew tap"></a>
 </p>
 
 Oracle is a CLI and MCP server that bundles a prompt with the files you select, sends that context to an AI model through an API or a signed-in browser, and stores the result as a session. It is for developers and coding agents that need a second-model review grounded in the actual project.
@@ -21,19 +21,19 @@ Full documentation is at [askoracle.sh](https://askoracle.sh).
 With Homebrew on macOS or Linux:
 
 ```bash
-brew install steipete/tap/oracle
+brew install rvbuilds/tap/oracle
 ```
 
 Or install the npm package globally:
 
 ```bash
-npm install -g @steipete/oracle
+npm install -g @rvbuilds/oracle
 ```
 
 Oracle requires Node.js 24 or newer. To try it without installing:
 
 ```bash
-npx -y @steipete/oracle --help
+npx -y @rvbuilds/oracle --help
 ```
 
 See the [installation guide](docs/install.md) for pnpm, updates, API keys, and storage paths.

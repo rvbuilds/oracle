@@ -6,7 +6,7 @@ description: "Install Oracle via Homebrew, npm, or run on demand with npx. Node 
 ## Homebrew (macOS / Linux)
 
 ```bash
-brew install steipete/tap/oracle
+brew install rvbuilds/tap/oracle
 ```
 
 The tap also publishes the `oracle-notifier` macOS helper used by long-running browser runs.
@@ -14,9 +14,9 @@ The tap also publishes the `oracle-notifier` macOS helper used by long-running b
 ## npm / pnpm
 
 ```bash
-npm install -g @steipete/oracle
+npm install -g @rvbuilds/oracle
 # or
-pnpm add -g @steipete/oracle
+pnpm add -g @rvbuilds/oracle
 ```
 
 Requires Node **24 or newer**. After install:
@@ -29,11 +29,11 @@ oracle --version
 ## Run without installing
 
 ```bash
-npx -y @steipete/oracle --help
-pnpx @steipete/oracle --help
+npx -y @rvbuilds/oracle --help
+pnpx @rvbuilds/oracle --help
 ```
 
-`npx` is fine for CI, ad-hoc scripts, or when you don't want a global binary on the box. Cache the package in CI by pinning the version (`@steipete/oracle@0.12.1`) so you don't re-download on every job.
+`npx` is fine for CI, ad-hoc scripts, or when you don't want a global binary on the box. Cache the package in CI by pinning the version (`@rvbuilds/oracle@0.12.1`) so you don't re-download on every job.
 
 ## API keys (optional)
 
@@ -63,7 +63,7 @@ Override the root with `ORACLE_HOME_DIR=/some/path` if you'd rather keep state u
 
 ```bash
 brew upgrade oracle      # Homebrew
-npm update -g @steipete/oracle
+npm update -g @rvbuilds/oracle
 ```
 
-`oracle --version` reports the current build. Releases land on [GitHub Releases](https://github.com/steipete/oracle/releases) with notes copied from the [changelog](https://github.com/steipete/oracle/blob/main/CHANGELOG.md).
+`oracle --version` reports the current build. Releases land on [GitHub Releases](https://github.com/rvbuilds/oracle/releases) with notes copied from the [changelog](https://github.com/rvbuilds/oracle/blob/main/CHANGELOG.md).

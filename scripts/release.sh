@@ -50,15 +50,15 @@ phase_artifacts() {
 phase_publish() {
   banner "Publish to npm"
   run "$RUNNER" pnpm publish --tag latest --access public
-  run "$RUNNER" npm view @steipete/oracle version
-  run "$RUNNER" npm view @steipete/oracle time
+  run "$RUNNER" npm view @rvbuilds/oracle version
+  run "$RUNNER" npm view @rvbuilds/oracle time
 }
 
 phase_smoke() {
   banner "Smoke test in empty dir"
   local tmp=/tmp/oracle-empty
   rm -rf "$tmp" && mkdir -p "$tmp"
-  ( cd "$tmp" && npx -y @steipete/oracle@"$VERSION" "Smoke from empty dir" --dry-run )
+  ( cd "$tmp" && npx -y @rvbuilds/oracle@"$VERSION" "Smoke from empty dir" --dry-run )
 }
 
 phase_tag() {
@@ -75,7 +75,7 @@ Phases (run individually or all):
   gates      pnpm check, lint, test, build
   artifacts  npm pack + sha1/sha256
   publish    pnpm publish --tag latest --access public, verify npm view
-  smoke      empty-dir npx @steipete/oracle@<version> --dry-run
+  smoke      empty-dir npx @rvbuilds/oracle@<version> --dry-run
   tag        git tag v<version> && push tags
   all        run everything in order
 

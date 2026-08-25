@@ -4,7 +4,7 @@ import path from "node:path";
 import { mkdtemp, rm, writeFile, stat } from "node:fs/promises";
 import { runBrowserMode } from "../../src/browser/index.js";
 import { acquireLiveTestLock, releaseLiveTestLock } from "./liveLock.js";
-import { getCookies } from "@steipete/sweet-cookie";
+import { getCookies } from "@rvbuilds/sweet-cookie";
 
 const LIVE = process.env.ORACLE_LIVE_TEST === "1";
 const FAST = process.env.ORACLE_LIVE_TEST_FAST === "1";

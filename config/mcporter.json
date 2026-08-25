@@ -21,11 +21,11 @@
       "lifecycle": "ephemeral"
     },
     "iterm": {
-      "command": "/Users/steipete/Projects/iterm-mcp/build/index.js"
+      "command": "/Users/rvbuilds/Projects/iterm-mcp/build/index.js"
     },
     "oracle": {
       "command": "npx",
-      "args": ["-y", "@steipete/oracle", "oracle-mcp"],
+      "args": ["-y", "@rvbuilds/oracle", "oracle-mcp"],
       "root": ".."
     },
     "oracle-local": {

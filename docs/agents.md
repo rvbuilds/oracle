@@ -13,7 +13,7 @@ Drop this into the project's `AGENTS.md` or `CLAUDE.md`:
 - Oracle bundles a prompt plus the right files so a Pro model (GPT-5.5 Pro,
   Gemini 3 Pro, Claude Opus) can answer with real repo context. Use when stuck,
   debugging hard bugs, doing architecture review, or cross-validating a plan.
-- Run `npx -y @steipete/oracle --help` once per session before first use.
+- Run `npx -y @rvbuilds/oracle --help` once per session before first use.
 ```
 
 That's enough for most agents to discover and use Oracle correctly. The patterns below cover the deeper integrations.
@@ -43,7 +43,7 @@ Then reference `oracle` in `CLAUDE.md`. Claude Code will load `SKILL.md` wheneve
 
 ### As a slash command
 
-Many users alias Oracle behind a custom `/consult` slash command that wraps `npx -y @steipete/oracle --engine browser …`. Pair with `--browser-tab current` to keep all consults in one ChatGPT conversation.
+Many users alias Oracle behind a custom `/consult` slash command that wraps `npx -y @rvbuilds/oracle --engine browser …`. Pair with `--browser-tab current` to keep all consults in one ChatGPT conversation.
 
 ## Codex
 

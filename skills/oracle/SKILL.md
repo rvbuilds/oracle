@@ -78,7 +78,7 @@ Do not pass `gpt-5.6` or `gpt-5.6-sol` to an unpatched npm 0.15.2 install. That
 release can normalize those labels to `gpt-5.2`. Use the explicit fallback:
 
 ```bash
-npx -y @steipete/oracle@0.15.2 --engine browser --model gpt-5.5-pro \
+npx -y @rvbuilds/oracle@0.15.2 --engine browser --model gpt-5.5-pro \
   -p "<task>" --file "src/**"
 ```
 
@@ -99,24 +99,24 @@ and a live browser run records strict GPT-5.6 selection evidence.
 ## Commands
 
 - Show help:
-  - `npx -y @steipete/oracle --help --verbose`
+  - `npx -y @rvbuilds/oracle --help --verbose`
 
 - Preview without calling a model:
-  - `npx -y @steipete/oracle --dry-run summary -p "<task>" --file "src/**" --file "!**/*.test.*"`
-  - `npx -y @steipete/oracle --dry-run full -p "<task>" --file "src/**"`
+  - `npx -y @rvbuilds/oracle --dry-run summary -p "<task>" --file "src/**" --file "!**/*.test.*"`
+  - `npx -y @rvbuilds/oracle --dry-run full -p "<task>" --file "src/**"`
 
 - Inspect token usage:
-  - `npx -y @steipete/oracle --dry-run summary --files-report -p "<task>" --file "src/**"`
+  - `npx -y @rvbuilds/oracle --dry-run summary --files-report -p "<task>" --file "src/**"`
 
 - Browser run:
   - `oracle --engine browser --browser-manual-login --model gpt-5.6-sol --browser-thinking-time extra-high -p "<task>" --file "src/**"`
 
 - Manual paste fallback:
-  - `npx -y @steipete/oracle --render-markdown --copy-markdown -p "<task>" --file "src/**"`
+  - `npx -y @rvbuilds/oracle --render-markdown --copy-markdown -p "<task>" --file "src/**"`
   - `--render` is an alias for `--render-markdown`.
 
 - Performance trace:
-  - `npx -y @steipete/oracle --perf-trace --perf-trace-path /tmp/oracle-perf.json --dry-run summary -p "<task>" --file "src/**"`
+  - `npx -y @rvbuilds/oracle --perf-trace --perf-trace-path /tmp/oracle-perf.json --dry-run summary -p "<task>" --file "src/**"`
 
 ## Attaching files
 

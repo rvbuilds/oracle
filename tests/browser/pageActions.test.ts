@@ -1263,7 +1263,7 @@ describe("ensureLoggedIn", () => {
 
   test("selects the configured welcome-back account by exact email", () => {
     const { result, clicked } = runWelcomeBackPickerForLabels(
-      ["Continue as steipete@example.test", "Continue as pete@example.test"],
+      ["Continue as rvbuilds@example.test", "Continue as pete@example.test"],
       "pete@example.test",
     );
 

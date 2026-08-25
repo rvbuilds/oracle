@@ -71,7 +71,7 @@ const getCookies = vi.fn(async () => ({
   ],
   warnings: [] as string[],
 }));
-vi.mock("@steipete/sweet-cookie", () => ({ getCookies }));
+vi.mock("@rvbuilds/sweet-cookie", () => ({ getCookies }));
 vi.mock("../../src/browser/chromeLifecycle.js", () => ({
   launchChrome,
   connectWithNewTab,

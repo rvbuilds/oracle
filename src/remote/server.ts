@@ -19,7 +19,7 @@ import type {
   RemoteRunEvent,
 } from "./types.js";
 import { MAX_REMOTE_ARTIFACT_BYTES } from "./types.js";
-import { getCookies, type Cookie } from "@steipete/sweet-cookie";
+import { getCookies, type Cookie } from "@rvbuilds/sweet-cookie";
 import { CHATGPT_URL } from "../browser/constants.js";
 import { getCliVersion } from "../version.js";
 import { getOracleHomeDir } from "../oracleHome.js";

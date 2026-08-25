@@ -386,7 +386,7 @@ select the right model _and_ the Pro effort tier.
 - Gemini web: include upload MIME metadata so image attachments keep working for image analysis, with regression coverage for image and non-image payloads. (#104) — thanks @DK625.
 - Gemini web: include Chrome/sweet-cookie warnings in missing-cookie failures so app-bound-cookie and SQLite/BigInt extraction problems surface actionable diagnostics instead of a generic auth-cookie error.
 - MCP: let `consult` inherit browser defaults from `~/.oracle/config.json` while still honoring explicit tool-call overrides. (#109) — thanks @doodaaatimmy-creator.
-- Dependencies: bump `@steipete/sweet-cookie` to `0.2.0`, picking up the Node 22 Chrome-cookie read fix that casts `expires_utc` safely instead of tripping the SQLite BigInt overflow path.
+- Dependencies: bump `@rvbuilds/sweet-cookie` to `0.2.0`, picking up the Node 22 Chrome-cookie read fix that casts `expires_utc` safely instead of tripping the SQLite BigInt overflow path.
 
 ## 0.8.6 — 2026-02-09
 
@@ -628,7 +628,7 @@ select the right model _and_ the Pro effort tier.
 
 ### Changed
 
-- Docs: README now explicitly warns against `pnpx @steipete/oracle` (pnpx cache breaks sqlite bindings); use `npx -y @steipete/oracle` instead. Thanks Xuanwo for flagging this.
+- Docs: README now explicitly warns against `pnpx @rvbuilds/oracle` (pnpx cache breaks sqlite bindings); use `npx -y @rvbuilds/oracle` instead. Thanks Xuanwo for flagging this.
 - Browser uploads: stick to the single reliable file-input path (no drag/drop fallbacks), wait for the composer to render the new “N files” pill/remove-card UI before sending, and prefer non-image inputs. Thanks Peter for the repros and screenshots that caught the regressions.
 
 ### Fixed
@@ -726,7 +726,7 @@ select the right model _and_ the Pro effort tier.
 ### Fixed
 
 - MCP/API runs now surface 404/405 Responses API failures as “unsupported-endpoint” with actionable guidance (check OPENAI_BASE_URL/Azure setup or use the browser engine) instead of a generic transport error.
-- Publish metadata now declares Node >=20 (engines/devEngines) and drops the implicit bun runtime so `npx @steipete/oracle` no longer fails with EBADDEVENGINES on newer Node versions.
+- Publish metadata now declares Node >=20 (engines/devEngines) and drops the implicit bun runtime so `npx @rvbuilds/oracle` no longer fails with EBADDEVENGINES on newer Node versions.
 
 ## 0.4.3 — 2025-11-22
 
@@ -746,8 +746,8 @@ select the right model _and_ the Pro effort tier.
 
 ### Fixed
 
-- MCP: `npx @steipete/oracle oracle-mcp` now routes directly to the MCP server (even when npx defaults to the CLI binary) and keeps stdout JSON-only for Cursor/other MCP hosts.
-- Added the missing `@anthropic-ai/tokenizer` runtime dependency so `npx @steipete/oracle oracle-mcp` starts cleanly.
+- MCP: `npx @rvbuilds/oracle oracle-mcp` now routes directly to the MCP server (even when npx defaults to the CLI binary) and keeps stdout JSON-only for Cursor/other MCP hosts.
+- Added the missing `@anthropic-ai/tokenizer` runtime dependency so `npx @rvbuilds/oracle oracle-mcp` starts cleanly.
 
 ## 0.4.1 — 2025-11-21
 
@@ -851,7 +851,7 @@ select the right model _and_ the Pro effort tier.
     "name": "oracle",
     "type": "stdio",
     "command": "npx",
-    "args": ["-y", "@steipete/oracle", "oracle-mcp"]
+    "args": ["-y", "@rvbuilds/oracle", "oracle-mcp"]
   }
   ```
 - Claude Code (global/user scope):  
@@ -863,7 +863,7 @@ select the right model _and_ the Pro effort tier.
       "oracle": {
         "type": "stdio",
         "command": "npx",
-        "args": ["-y", "@steipete/oracle", "oracle-mcp"]
+        "args": ["-y", "@rvbuilds/oracle", "oracle-mcp"]
       }
     }
   }
@@ -954,7 +954,7 @@ Details
 
 ### Added
 
-- Positional prompt shorthand: `oracle "prompt here"` (and `npx -y @steipete/oracle "..."`) now maps the positional argument to `--prompt` automatically.
+- Positional prompt shorthand: `oracle "prompt here"` (and `npx -y @rvbuilds/oracle "..."`) now maps the positional argument to `--prompt` automatically.
 
 ### Fixed
 

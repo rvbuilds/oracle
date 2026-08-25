@@ -11,7 +11,7 @@ import {
   verifyDevToolsReachable,
 } from "../../src/browser/profileState.js";
 import { acquireLiveTestLock, releaseLiveTestLock } from "./liveLock.js";
-import { getCookies } from "@steipete/sweet-cookie";
+import { getCookies } from "@rvbuilds/sweet-cookie";
 
 const LIVE = process.env.ORACLE_LIVE_TEST === "1";
 const MANUAL = process.env.ORACLE_LIVE_TEST_MANUAL_LOGIN === "1";

@@ -5,7 +5,7 @@ import type {
   BrowserLogger,
   CookieParam,
 } from "../browser/types.js";
-import { getCookies } from "@steipete/sweet-cookie";
+import { getCookies } from "@rvbuilds/sweet-cookie";
 import { runProviderDomFlow } from "../browser/providerDomFlow.js";
 import { delay } from "../browser/utils.js";
 import { runGeminiWebWithFallback, saveFirstGeminiImageFromOutput } from "./client.js";
